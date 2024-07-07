@@ -15,7 +15,8 @@
       "@vueuse/metadata": ["./packages/metadata/index.ts"],
       "@vueuse/math": ["./packages/math/index.ts"],
       "@vueuse/shared": ["./packages/shared/index.ts"],
-      "@vueuse/shared/*": ["./packages/shared/*"]
+      "@vueuse/shared/*": ["./packages/shared/*"],
+      "@vueuse/color": ["./packages/color/index.ts"]
     },
     "resolveJsonModule": true,
     "types": [

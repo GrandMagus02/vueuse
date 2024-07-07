@@ -80,9 +80,11 @@
     border-bottom: 0;
     border-top: 2px solid var(--vp-c-brand-2);
   }
+
   button ~ button {
     margin-left: 0.5rem;
   }
+
   button[disabled],
   button.disabled {
     cursor: default;
@@ -134,6 +136,22 @@
   }
 
   input:focus {
+    border: 1px solid var(--vp-c-border);
+  }
+
+  select {
+    display: block;
+    font-size: 0.9rem;
+    padding: 0.5em 1em 0.4em 1em;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 4px;
+    outline: none;
+    background: var(--vp-c-bg);
+    color: var(--vp-c-text);
+    margin: 0.5rem 0;
+  }
+
+  select:focus {
     border: 1px solid var(--vp-c-border);
   }
 

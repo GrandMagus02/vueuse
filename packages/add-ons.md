@@ -92,7 +92,7 @@ Integration wrappers for utility libraries
 
 Enables RxJS reactive functions in Vue
 
-- [`from`](https://vueuse.org/rxjs/from/) — wrappers around RxJS's [`from()`](https://rxjs.dev/api/index/function/from) and [`fromEvent()`](https://rxjs.dev/api/index/function/fromEvent) to allow them to accept `ref`s
+- [`from`](https://vueuse.org/rxjs/from/)
 - [`toObserver`](https://vueuse.org/rxjs/toObserver/) — sugar function to convert a `ref` into an RxJS [Observer](https://rxjs.dev/guide/observer)
 - [`useExtractedObservable`](https://vueuse.org/rxjs/useExtractedObservable/) — use an RxJS [`Observable`](https://rxjs.dev/guide/observable) as extracted from one or more composables
 - [`useObservable`](https://vueuse.org/rxjs/useObservable/) — use an RxJS [`Observable`](https://rxjs.dev/guide/observable)
@@ -117,5 +117,14 @@ Electron renderer process modules for VueUse
 - [`useIpcRendererOn`](https://vueuse.org/electron/useIpcRendererOn/) — use [ipcRenderer.on](https://www.electronjs.org/docs/api/ipc-renderer#ipcrendereronchannel-listener) with ease and [ipcRenderer.removeListener](https://www.electronjs.org/docs/api/ipc-renderer#ipcrendererremovelistenerchannel-listener) automatically on unmounted
 - [`useZoomFactor`](https://vueuse.org/electron/useZoomFactor/) — reactive [WebFrame](https://www.electronjs.org/docs/api/web-frame#webframe) zoom factor
 - [`useZoomLevel`](https://vueuse.org/electron/useZoomLevel/) — reactive [WebFrame](https://www.electronjs.org/docs/api/web-frame#webframe) zoom level
+
+## Color - [`@vueuse/color`](https://vueuse.org/color/README.html)
+
+Color utilities for VueUse
+
+- [`colorConvert`](https://vueuse.org/color/colorConvert/) — converts color between different formats
+- [`colorHarmony`](https://vueuse.org/color/colorHarmony/) — color harmony generator
+- [`useColorFormat`](https://vueuse.org/color/useColorFormat/) — reactive color format conversion
+- [`useColorHarmony`](https://vueuse.org/color/useColorHarmony/) — reactive color harmony generator
 
 <!--ADDONS_LIST_ENDS-->

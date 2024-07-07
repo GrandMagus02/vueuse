@@ -58,6 +58,7 @@ export default defineConfig({
       '@vueuse/math': resolve(__dirname, '../math/index.ts'),
       '@vueuse/integrations/useFocusTrap': resolve(__dirname, '../integrations/useFocusTrap/index.ts'),
       '@vueuse/integrations': resolve(__dirname, '../integrations/index.ts'),
+      '@vueuse/color': resolve(__dirname, '../color/index.ts'),
       '@vueuse/components': resolve(__dirname, '../components/index.ts'),
       '@vueuse/metadata': resolve(__dirname, '../metadata/index.ts'),
       '@vueuse/docs-utils': resolve(__dirname, 'plugins/utils.ts'),
