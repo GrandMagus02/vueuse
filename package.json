@@ -58,6 +58,7 @@
     "@vueuse/core": "workspace:*",
     "@vueuse/integrations": "workspace:*",
     "@vueuse/math": "workspace:*",
+    "@vueuse/color": "workspace:*",
     "@vueuse/metadata": "workspace:*",
     "@vueuse/rxjs": "workspace:*",
     "@vueuse/shared": "workspace:*",

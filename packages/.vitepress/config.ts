@@ -166,6 +166,7 @@ export default withPwa(defineConfig({
       '/integrations/': FunctionsSideBar,
       '/firebase/': FunctionsSideBar,
       '/math/': FunctionsSideBar,
+      '/color/': FunctionsSideBar,
     },
   },
   head: [

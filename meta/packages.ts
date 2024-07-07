@@ -154,4 +154,14 @@ export const packages: PackageManifest[] = [
     ],
     iife: false,
   },
+  {
+    name: 'color',
+    display: 'Color',
+    description: 'Color utilities for VueUse',
+    author: 'GrandMaugs<https://github.com/GrandMagus02>',
+    addon: true,
+    external: [
+      '@vueuse/shared',
+    ],
+  },
 ]
