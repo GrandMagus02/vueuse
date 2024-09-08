@@ -1,4 +1,4 @@
-export const colorKeywords: { [key: string]: [number, number, number] } = {
+export const colorKeywords = {
   aliceblue: [240, 248, 255],
   antiquewhite: [250, 235, 215],
   aqua: [0, 255, 255],
@@ -147,12 +147,6 @@ export const colorKeywords: { [key: string]: [number, number, number] } = {
   whitesmoke: [245, 245, 245],
   yellow: [255, 255, 0],
   yellowgreen: [154, 205, 50],
-}
+} as const
 
-const reverseKeywords: { [key: string]: string } = {}
-for (const key of Object.keys(colorKeywords)) {
-  const rgb = colorKeywords[key]
-  reverseKeywords[rgb.join(',')] = key
-}
-
-export { reverseKeywords }
+export type ColorKeyword = keyof typeof colorKeywords

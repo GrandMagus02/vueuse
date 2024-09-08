@@ -17,7 +17,8 @@
   "keywords": [
     "vue",
     "vue-use",
-    "utils"
+    "utils",
+    "color"
   ],
   "sideEffects": false,
   "exports": {

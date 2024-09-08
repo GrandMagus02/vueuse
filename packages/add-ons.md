@@ -122,9 +122,11 @@ Electron renderer process modules for VueUse
 
 Color utilities for VueUse
 
-- [`colorConvert`](https://vueuse.org/color/colorConvert/) — converts color between different formats
-- [`colorHarmony`](https://vueuse.org/color/colorHarmony/) — color harmony generator
-- [`useColorFormat`](https://vueuse.org/color/useColorFormat/) — reactive color format conversion
-- [`useColorHarmony`](https://vueuse.org/color/useColorHarmony/) — reactive color harmony generator
+- [`convertColor`](https://vueuse.org/color/convertColor/) — converts color between different formats
+- [`harmonyColor`](https://vueuse.org/color/harmonyColor/) — converts color between different formats
+- [`parseColor`](https://vueuse.org/color/parseColor/) — parses color string into object
+- [`stringifyColor`](https://vueuse.org/color/stringifyColor/) — converts color to string
+- [`useColor`](https://vueuse.org/color/useColor/) — converts color between different formats
+- [`useHarmony`](https://vueuse.org/color/useHarmony/) — converts color between different formats
 
 <!--ADDONS_LIST_ENDS-->
