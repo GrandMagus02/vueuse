@@ -1,115 +1,69 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends ColorFormat">
 import { computed, ref } from 'vue-demi'
-import { ColorFormat, type ColorFormatResult, colorConvert } from '@vueuse/color'
+import type { ColorFormat, ColorFormatValue, HSLA } from '@vueuse/color'
+import { Format, convertColor, isAlphaFormat } from '@vueuse/color'
 import { watchIgnorable } from '@vueuse/shared'
 
 const props = withDefaults(defineProps<{
-  modelValue: ColorFormatResult<ColorFormat>
-  colors?: ColorFormatResult<ColorFormat>[]
+  modelValue: ColorFormatValue<T>
+  format: T
+  colors?: ColorFormatValue<T>[]
 }>(), {
   colors: () => [],
 })
 
 const emits = defineEmits<{
-  (event: 'update:modelValue', value: ColorFormatResult<ColorFormat>): void
+  (event: 'update:modelValue', value: ColorFormatValue<T>): void
 }>()
 
-const inputFormat = computed<ColorFormat>(() => props.modelValue?.format ?? ColorFormat.HEX)
+const hsla = ref<HSLA>({ h: 180, s: 1, l: 1, a: 1 })
+const hslaColors = computed(() => [...props.colors.map((c) => {
+  return convertColor(c, props.format, Format.HSLA)
+}), hsla.value])
 
-const h = ref(180)
-const s = ref(100)
-const l = ref(50)
-const a = ref(1)
+const showAlpha = computed(() => isAlphaFormat(props.format))
+let ignoreModelUpdates: (updater: () => void) => void | undefined
+let ignoreHSLAUpdates: (updater: () => void) => void | undefined
 
-const hsla = computed<ColorFormatResult<ColorFormat.HSLA>>({
-  get: () => {
-    const color = colorConvert(props.modelValue, ColorFormat.HSLA)
-    return {
-      h: color.h,
-      s: color.s,
-      l: color.l,
-      a: color.a,
-      format: ColorFormat.HSLA,
-    } as ColorFormatResult<ColorFormat.HSLA>
-  },
-  set: (value) => {
-    const color = colorConvert(value, inputFormat.value)
-    emits('update:modelValue', color)
-  },
-})
+const { ignoreUpdates: _ignoreModelUpdates } = watchIgnorable(() => props.modelValue, (value) => {
+  if (!ignoreModelUpdates)
+    return
+  ignoreHSLAUpdates(() => {
+    hsla.value = convertColor(value, props.format, Format.HSLA)
+  })
+}, { deep: true, immediate: true })
 
-const { ignoreUpdates } = watchIgnorable(() => hsla, () => {
-  h.value = hsla.value.h
-  s.value = hsla.value.s
-  l.value = hsla.value.l
-  // a.value = hsla.value.a
-}, { immediate: true })
+const { ignoreUpdates: _ignoreHSLAUpdates } = watchIgnorable(() => hsla.value, (value) => {
+  if (!ignoreHSLAUpdates)
+    return
+  ignoreModelUpdates(() => {
+    emits('update:modelValue', convertColor(value, Format.HSLA, props.format) as ColorFormatValue<T>)
+  })
+}, { deep: true })
 
-const hslaColors = computed<ColorFormatResult<ColorFormat.HSLA>[]>(() => [
-  ...props.colors,
-  hsla.value,
-].map((color) => {
-  return colorConvert(color, ColorFormat.HSLA)
-}))
+ignoreModelUpdates = _ignoreModelUpdates
+ignoreHSLAUpdates = _ignoreHSLAUpdates
+
+// watchArray(() => props.colors, (colors) => {
+//   hslaColors.value = [...colors.map(c => convertColor(c, props.format, formatHSLA)), hsla.value]
+// }, { immediate: true })
 
 const showLines = computed(() => {
-  const uniqueColors = new Set(hslaColors.value.map(color => `${color.h}${color.s}`))
+  const uniqueColors = new Set(hslaColors.value.map(c => `${Math.round(c.h)};${Math.round(c.s * 100)}`))
   return uniqueColors.size > 1
 })
 
 const wheel = ref<SVGElement | null>(null)
 const colorWheelStyle = computed(() => {
-  const { r, g, b, a: alpha } = colorConvert({ ...hsla.value, h: 0, s: 0 }, ColorFormat.RGBA)
   return {
-    background: `conic-gradient(
-        rgba(255, 0, 0, ${alpha}),
-        rgba(255, 255, 0, ${alpha}),
-        rgba(0, 255, 0, ${alpha}),
-        rgba(0, 255, 255, ${alpha}),
-        rgba(0, 0, 255, ${alpha}),
-        rgba(255, 0, 255, ${alpha}),
-        rgba(255, 0, 0, ${alpha})
-      ),
-      radial-gradient(
-        circle,
-        rgba(${r}, ${g}, ${b}, ${alpha}) 0%,
-        transparent 75%
-      )`,
-    backgroundBlendMode: 'saturation',
+    '--alpha': hsla.value.a,
+    '--lightness': hsla.value.l,
   }
 })
 
-function onInputHue(event: Event) {
-  const target = event.target as HTMLInputElement
-  const value = Number.parseFloat(target.value)
-  ignoreUpdates(() => {
-    hsla.value = { ...hsla.value, h: value }
-  })
-}
-
-function onInputSaturation(event: Event) {
-  const target = event.target as HTMLInputElement
-  const value = Number.parseFloat(target.value)
-  ignoreUpdates(() => {
-    hsla.value = { ...hsla.value, s: value }
-  })
-}
-
-function onInputLightness(event: Event) {
-  const target = event.target as HTMLInputElement
-  const value = Number.parseFloat(target.value)
-  ignoreUpdates(() => {
-    hsla.value = { ...hsla.value, l: value }
-  })
-}
-
 function onInputAlpha(event: Event) {
   const target = event.target as HTMLInputElement
-  const value = Number.parseFloat(target.value)
-  ignoreUpdates(() => {
-    a.value = value
-    hsla.value = { ...hsla.value, a: value }
-  })
+  hsla.value.a = Number.parseFloat(target.value)
 }
 
 function calculateAngle(x: number, y: number) {
@@ -128,7 +82,7 @@ function onMouseMove(e: MouseEvent) {
   const y = e.clientY - yCenter
   const h = calculateAngle(x, y)
 
-  const s = Math.min(100, Math.hypot(x, y) / Math.min(rect.width / 2, rect.height / 2) * 100)
+  const s = Math.min(1, Math.hypot(x, y) / Math.min(rect.width / 2, rect.height / 2))
 
   hsla.value = { ...hsla.value, h, s }
 }
@@ -148,25 +102,38 @@ function onMouseUp() {
 </script>
 
 <template>
-  <div class="color-picker">
+  <div class="color-picker" :style="colorWheelStyle">
     <div class="color-wheel-wrapper">
+      <div class="color-wheel-gray" />
+      <div class="color-wheel-white" />
+      <div class="color-wheel-black" />
+      <div class="color-wheel-hue" />
       <svg
         ref="wheel" class="color-wheel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
-        :style="colorWheelStyle"
         @mousedown="onMouseDown"
       >
-        <g v-for="(color, i) in hslaColors" :key="`${color.h}${color.s}${color.l}${i}`">
+        <g v-for="(color, i) in hslaColors" :key="i">
           <line
             v-if="showLines"
-            x1="50" y1="50" :x2="50 + color.s * 0.5 * Math.sin(color.h * Math.PI / 180)"
-            :y2="50 + color.s * 0.5 * -Math.cos(color.h * Math.PI / 180)" stroke="white"
+            x1="50" y1="50" :x2="50 + (color.s * 100) * 0.5 * Math.sin(color.h * Math.PI / 180)"
+            :y2="50 + (color.s * 100) * 0.5 * -Math.cos(color.h * Math.PI / 180)"
+            :stroke="`hsla(255, 0%, ${color.l > 0.5 ? 0 : 100}%, 1)`"
           />
           <circle
-            :cx="50 + color.s * 0.5 * Math.sin(color.h * Math.PI / 180)"
-            :cy="50 + color.s * 0.5 * -Math.cos(color.h * Math.PI / 180)"
-            r="5"
-            :fill="`hsla(${color.h}, ${color.s}%, ${color.l}%)`"
-            stroke="white"
+            v-if="i === hslaColors.length - 1"
+            :cx="50 + (color.s * 100) * 0.5 * Math.sin(color.h * Math.PI / 180)"
+            :cy="50 + (color.s * 100) * 0.5 * -Math.cos(color.h * Math.PI / 180)"
+            r="8"
+            fill="transparent"
+            :stroke="`hsla(255, 0%, ${color.l > 0.5 ? 0 : 100}%, .75)`"
+            stroke-width=".5"
+          />
+          <circle
+            :cx="50 + (color.s * 100) * 0.5 * Math.sin(color.h * Math.PI / 180)"
+            :cy="50 + (color.s * 100) * 0.5 * -Math.cos(color.h * Math.PI / 180)"
+            r="6"
+            :fill="`hsla(${color.h}, ${color.s * 100}%, ${color.l * 100}%)`"
+            :stroke="`hsla(255, 0%, ${color.l > 0.5 ? 0 : 100}%, 1)`"
             stroke-width="1"
           />
         </g>
@@ -175,20 +142,20 @@ function onMouseUp() {
 
     <label class="w-full flex flex-col">
       <span>Hue: {{ Math.round(hsla.h) }}°</span>
-      <input :value="hsla.h" class="h-4" type="range" min="0" max="360" step="1" @input="onInputHue">
+      <input v-model.number="hsla.h" class="h-4" type="range" min="0" max="360" step="1">
     </label>
 
     <label class="w-full flex flex-col">
-      <span>Saturation: {{ Math.round(hsla.s) }}%</span>
-      <input :value="hsla.s" class="h-4" type="range" min="0" max="100" step="1" @input="onInputSaturation">
+      <span>Saturation: {{ Math.round(hsla.s * 100) }}%</span>
+      <input v-model.number="hsla.s" class="h-4" type="range" min="0" max="1" step="0.01">
     </label>
 
     <label class="w-full flex flex-col">
-      <span>Lightness: {{ Math.round(hsla.l) }}%</span>
-      <input :value="hsla.l" class="h-4" type="range" min="0" max="100" step="1" @input="onInputLightness">
+      <span>Lightness: {{ Math.round(hsla.l * 100) }}%</span>
+      <input v-model.number="hsla.l" class="h-4" type="range" min="0" max="1" step="0.01">
     </label>
 
-    <label class="w-full flex flex-col">
+    <label v-if="showAlpha" class="w-full flex flex-col">
       <span>Alpha: {{ Math.round(hsla.a * 100) }}%</span>
       <input :value="hsla.a" class="h-4" type="range" min="0" max="1" step="0.01" @input="onInputAlpha">
     </label>
@@ -201,8 +168,10 @@ function onMouseUp() {
   justify-content: end;
   flex-direction: column;
   position: relative;
-  width: 200px;
-  max-width: 200px;
+  width: 160px;
+  max-width: 160px;
+  --alpha: 1;
+  --lightness: 0.5;
 }
 
 .color-wheel-wrapper {
@@ -240,5 +209,109 @@ function onMouseUp() {
   height: 100%;
   cursor: pointer;
   user-select: none;
+  position: relative;
+  z-index: 2;
+}
+
+.color-wheel-hue {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+      circle at 50% 0,
+      rgba(255, 0, 0, var(--alpha, 1)),
+      rgba(242, 13, 13, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(230, 26, 26, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(204, 51, 51, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(166, 89, 89, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 85.35533905932738% 14.644660940672622%,
+      rgba(255, 191, 0, var(--alpha, 1)),
+      rgba(242, 185, 13, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(230, 179, 26, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(204, 166, 51, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(166, 147, 89, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 100% 50%,
+      rgba(128, 255, 0, var(--alpha, 1)),
+      rgba(128, 242, 13, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(128, 230, 26, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(128, 204, 51, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(128, 166, 89, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 85.35533905932738% 85.35533905932738%,
+      rgba(0, 255, 64, var(--alpha, 1)),
+      rgba(13, 242, 70, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(26, 230, 77, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(51, 204, 89, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(89, 166, 108, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 50.00000000000001% 100%,
+      rgba(0, 255, 255, var(--alpha, 1)),
+      rgba(13, 242, 242, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(26, 230, 230, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(51, 204, 204, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(89, 166, 166, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 14.64466094067263% 85.35533905932738%,
+      rgba(0, 64, 255, var(--alpha, 1)),
+      rgba(13, 70, 242, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(26, 77, 230, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(51, 89, 204, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(89, 108, 166, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 0 50.00000000000001%,
+      rgba(128, 0, 255, var(--alpha, 1)),
+      rgba(128, 13, 242, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(128, 26, 230, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(128, 51, 204, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(128, 89, 166, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    ),
+    radial-gradient(
+      circle at 14.644660940672615% 14.64466094067263%,
+      rgba(255, 0, 191, var(--alpha, 1)),
+      rgba(242, 13, 185, calc(var(--alpha, 1) * 0.8)) 10%,
+      rgba(230, 26, 179, calc(var(--alpha, 1) * 0.6)) 20%,
+      rgba(204, 51, 166, calc(var(--alpha, 1) * 0.4)) 30%,
+      rgba(166, 89, 147, calc(var(--alpha, 1) * 0.2)) 40%,
+      hsla(0, 0%, 50%, 0) 50%
+    );
+}
+
+.color-wheel-gray {
+  position: absolute;
+  inset: 0;
+  background: rgba(85, 85, 85, var(--alpha, 1));
+}
+
+.color-wheel-white {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: lighten;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(255, 255, 255, calc(var(--lightness, 0.5) * 2 - 1));
+}
+
+.color-wheel-black {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: darken;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(0, 0, 0, calc(1 - var(--lightness, 0.5) * 2));
 }
 </style>

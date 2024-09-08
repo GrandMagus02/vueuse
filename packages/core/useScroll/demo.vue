@@ -9,7 +9,7 @@ const { x, y, isScrolling, arrivedState, directions } = useScroll(el, { behavior
 const { left, right, top, bottom } = toRefs(arrivedState)
 const { left: toLeft, right: toRight, top: toTop, bottom: toBottom } = toRefs(directions)
 
-// Format the numbers with toFixed() to make them
+// T the numbers with toFixed() to make them
 // nicer to display
 const displayX = computed({
   get() {
