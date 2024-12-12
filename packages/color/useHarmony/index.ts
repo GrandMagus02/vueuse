@@ -1,59 +1,72 @@
 import type { MaybeRefOrGetter, Ref, WatchOptionsBase } from 'vue-demi'
-import { toValue } from 'vue-demi'
+import { computed, toValue } from 'vue-demi'
 import { computedEager } from '@vueuse/shared'
-import type { ColorFormat, ColorFormatValue, ColorHarmony } from '../utils'
+import type { Color, ColorFormat, ColorHarmony } from '../utils'
 import type { HarmonyColorOptions } from '../harmonyColor'
 import { harmonyColor } from '../harmonyColor'
 import { parseColor } from '../parseColor'
-import { determinate } from '../utils/determinate'
+import { determinate } from '../utils'
+import { normalizeColor } from '../normalizeColor'
+import { convertColor } from '../convertColor'
 
-export interface UseHarmonyOptions<TFormat extends ColorFormat> extends HarmonyColorOptions, WatchOptionsBase {
-  format?: TFormat
+export interface UseHarmonyOptions<TInput extends ColorFormat, TOutput extends ColorFormat> extends HarmonyColorOptions, WatchOptionsBase {
+  input?: TInput
+  output?: TOutput
   [key: string]: any
 }
 
-type CustomHarmony<T extends ColorFormat> = (color: ColorFormatValue<T>, format: T, ...args: any[]) => ColorFormatValue<T>[]
+export type CustomHarmony<T extends ColorFormat = ColorFormat> = (color: Color<T>, format: T, ...args: any[]) => Color<T>[]
 
-export function useHarmony<TFormat extends ColorFormat, THarmony extends ColorHarmony>(
-  value: MaybeRefOrGetter,
-  harmony: THarmony | CustomHarmony<TFormat>,
-  options: UseHarmonyOptions<TFormat> = {},
-): Readonly<Ref<ColorFormatValue<TFormat>[]>> {
+export function useHarmony<TInput extends ColorFormat, TOutput extends ColorFormat = TInput, THarmony extends ColorHarmony = ColorHarmony>(
+  value: MaybeRefOrGetter<Color<TInput> | string>,
+  harmony: THarmony | CustomHarmony,
+  options: UseHarmonyOptions<TInput, TOutput> = {},
+): Readonly<Ref<Color<TOutput>[]>> {
   const {
-    format,
+    input,
+    output = input,
     flush,
     onTrack,
     onTrigger,
     ...restOptions
   } = options
+
+  interface ParsedInputValue { value: Color<TInput>, format: TInput }
+
+  const parsedValue = computed<ParsedInputValue>(() => {
+    const val = toValue(value)
+    const inputFormat = toValue(input)
+
+    if (inputFormat) {
+      const parsed = parseColor(val, inputFormat)
+      return { value: normalizeColor(parsed, inputFormat), format: inputFormat } as ParsedInputValue
+    }
+
+    const { value: detVal, format } = determinate(val)
+    return { value: normalizeColor(detVal, format), format } as ParsedInputValue
+  })
+
   return computedEager(() => {
-    let determinedFormat: TFormat
-    let determinedValue: ColorFormatValue<TFormat> | undefined
-    if (!format) {
-      const determinedResult = determinate(toValue(value))
-      if (!determinedResult)
-        throw new Error('Invalid color format')
-      determinedValue = determinedResult[0] as ColorFormatValue<TFormat>
-      determinedFormat = determinedResult[1] as TFormat
-    }
-    else {
-      determinedValue = parseColor(toValue(value), format)
-      determinedFormat = format
-    }
+    const {
+      value: determinedValue,
+      format: determinedFormat,
+    } = parsedValue.value
 
     if (typeof harmony === 'function') {
       return harmony(
         determinedValue,
         determinedFormat,
         { ...restOptions },
-      ) as ColorFormatValue<TFormat>[]
+      ) as Color<TOutput>[]
     }
 
-    return harmonyColor(
+    const colors = harmonyColor(
       determinedValue,
       determinedFormat,
       harmony,
       { ...restOptions },
-    ) as ColorFormatValue<TFormat>[]
+    ) as Color<TInput>[]
+
+    return colors.map(color => convertColor(color, determinedFormat, output || determinedFormat)) as Color<TOutput>[]
   }, { flush, onTrack, onTrigger })
 }

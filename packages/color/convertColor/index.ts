@@ -1,23 +1,19 @@
-import type { ColorFormat, ColorFormatValue } from '../utils'
-import { convert } from '../utils'
-import { ensureColorFormat, roundColor } from '../utils/format'
+import type { Color, ColorFormat } from '../utils'
+import { convert, ensureColorFormat, roundColor } from '../utils'
 
 export interface ConvertColorOptions {
   /**
-   * Round the output values.
-   */
-  round?: boolean
-  /**
    * The precision for rounding the output values.
+   * @default undefined
    */
   precision?: number
 }
 
 /**
- * Convert a color from one format to another.
+ * Convert a color from one output to another.
  * @param value - The color value to convert.
- * @param input - The format of the input color.
- * @param output - The format of the output color.
+ * @param input - The output of the input color.
+ * @param output - The output of the output color.
  * @param options - The options for the conversion.
  */
 export function convertColor<TInput extends ColorFormat, TOutput extends ColorFormat>(
@@ -25,8 +21,11 @@ export function convertColor<TInput extends ColorFormat, TOutput extends ColorFo
   input: TInput,
   output: TOutput,
   options: ConvertColorOptions = {},
-): ColorFormatValue<TOutput> {
-  const { round = false, precision } = options
-  const convertedValue = convert[ensureColorFormat(input)][ensureColorFormat(output)](value) as ColorFormatValue<TOutput>
-  return round ? roundColor(convertedValue, precision) : convertedValue
+): Color<TOutput> {
+  const { precision } = options
+  let result = convert[ensureColorFormat<TInput>(input)][ensureColorFormat<TOutput>(output)](value)
+  if (precision !== undefined) {
+    result = roundColor(result, precision)
+  }
+  return result as Color<TOutput>
 }

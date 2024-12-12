@@ -1,25 +1,29 @@
 <script setup lang="ts" generic="T extends ColorFormat">
-import { computed, ref } from 'vue-demi'
-import type { ColorFormat, ColorFormatValue, HSLA } from '@vueuse/color'
-import { Format, convertColor, isAlphaFormat } from '@vueuse/color'
+import { computed, onMounted, ref, toValue } from 'vue-demi'
+import type { Color, ColorFormat } from '@vueuse/color'
+import { Format, convertColor, isAlphaFormat, stringifyColor, useColor } from '@vueuse/color'
 import { watchIgnorable } from '@vueuse/shared'
+import { useVModel } from '@vueuse/core'
 
 const props = withDefaults(defineProps<{
-  modelValue: ColorFormatValue<T>
+  modelValue: Color<T>
   format: T
-  colors?: ColorFormatValue<T>[]
+  colors?: Color<T>[]
 }>(), {
   colors: () => [],
 })
 
 const emits = defineEmits<{
-  (event: 'update:modelValue', value: ColorFormatValue<T>): void
+  (event: 'update:modelValue', value: Color<T>): void
 }>()
 
-const hsla = ref<HSLA>({ h: 180, s: 1, l: 1, a: 1 })
+const model = useVModel(props, 'modelValue', emits)
+
+const hsla = useColor(model.value, { input: props.format, output: 'hsla' })
+const rgba = useColor(hsla, { input: 'hsla', output: 'rgba' })
 const hslaColors = computed(() => [...props.colors.map((c) => {
   return convertColor(c, props.format, Format.HSLA)
-}), hsla.value])
+}), hsla])
 
 const showAlpha = computed(() => isAlphaFormat(props.format))
 let ignoreModelUpdates: (updater: () => void) => void | undefined
@@ -29,23 +33,29 @@ const { ignoreUpdates: _ignoreModelUpdates } = watchIgnorable(() => props.modelV
   if (!ignoreModelUpdates)
     return
   ignoreHSLAUpdates(() => {
-    hsla.value = convertColor(value, props.format, Format.HSLA)
+    Object.assign(hsla, convertColor(value, props.format, Format.HSLA))
   })
-}, { deep: true, immediate: true })
+}, { deep: true })
 
-const { ignoreUpdates: _ignoreHSLAUpdates } = watchIgnorable(() => hsla.value, (value) => {
+const { ignoreUpdates: _ignoreHSLAUpdates } = watchIgnorable(() => hsla, (value) => {
   if (!ignoreHSLAUpdates)
     return
   ignoreModelUpdates(() => {
-    emits('update:modelValue', convertColor(value, Format.HSLA, props.format) as ColorFormatValue<T>)
+    Object.assign(model.value, convertColor(value, Format.HSLA, props.format) as Color<T>)
   })
 }, { deep: true })
 
 ignoreModelUpdates = _ignoreModelUpdates
 ignoreHSLAUpdates = _ignoreHSLAUpdates
 
+onMounted(() => {
+  ignoreHSLAUpdates(() => {
+    Object.assign(hsla, convertColor(toValue(props.modelValue), props.format, Format.HSLA))
+  })
+})
+
 // watchArray(() => props.colors, (colors) => {
-//   hslaColors.value = [...colors.map(c => convertColor(c, props.format, formatHSLA)), hsla.value]
+//   hslaColors.value = [...colors.map(c => convertColor(c, props.output, formatHSLA)), hsla.value]
 // }, { immediate: true })
 
 const showLines = computed(() => {
@@ -56,14 +66,20 @@ const showLines = computed(() => {
 const wheel = ref<SVGElement | null>(null)
 const colorWheelStyle = computed(() => {
   return {
-    '--alpha': hsla.value.a,
-    '--lightness': hsla.value.l,
+    '--alpha': hsla.a,
+    '--lightness': hsla.l,
   }
 })
 
+const variants = [
+  'hsla',
+  'rgba',
+]
+const selectedVariant = ref(variants[0])
+
 function onInputAlpha(event: Event) {
   const target = event.target as HTMLInputElement
-  hsla.value.a = Number.parseFloat(target.value)
+  hsla.a = Number.parseFloat(target.value)
 }
 
 function calculateAngle(x: number, y: number) {
@@ -84,7 +100,9 @@ function onMouseMove(e: MouseEvent) {
 
   const s = Math.min(1, Math.hypot(x, y) / Math.min(rect.width / 2, rect.height / 2))
 
-  hsla.value = { ...hsla.value, h, s }
+  // hsla.value = { ...hsla.value, h, s }
+  hsla.h = h
+  hsla.s = s
 }
 
 function onMouseDown(e: MouseEvent) {
@@ -141,19 +159,50 @@ function onMouseUp() {
     </div>
 
     <label class="w-full flex flex-col">
-      <span>Hue: {{ Math.round(hsla.h) }}°</span>
-      <input v-model.number="hsla.h" class="h-4" type="range" min="0" max="360" step="1">
+      <span>Variant:</span>
+      <span class="flex w-full">
+        <select v-model="selectedVariant" class="select w-full">
+          <option v-for="key in variants" :key="key" :value="key">
+            {{ key }}
+          </option>
+        </select>
+        <span class="color-current" :style="{ '--current-color': stringifyColor(rgba, 'rgba') }" />
+      </span>
     </label>
 
-    <label class="w-full flex flex-col">
-      <span>Saturation: {{ Math.round(hsla.s * 100) }}%</span>
-      <input v-model.number="hsla.s" class="h-4" type="range" min="0" max="1" step="0.01">
-    </label>
+    <template v-if="selectedVariant === 'hsla'">
+      <label class="w-full flex flex-col">
+        <span>Hue: {{ Math.round(hsla.h) }}°</span>
+        <input v-model.number="hsla.h" class="h-4" type="range" min="0" max="360" step="1">
+      </label>
 
-    <label class="w-full flex flex-col">
-      <span>Lightness: {{ Math.round(hsla.l * 100) }}%</span>
-      <input v-model.number="hsla.l" class="h-4" type="range" min="0" max="1" step="0.01">
-    </label>
+      <label class="w-full flex flex-col">
+        <span>Saturation: {{ Math.round(hsla.s * 100) }}%</span>
+        <input v-model.number="hsla.s" class="h-4" type="range" min="0" max="1" step="0.01">
+      </label>
+
+      <label class="w-full flex flex-col">
+        <span>Lightness: {{ Math.round(hsla.l * 100) }}%</span>
+        <input v-model.number="hsla.l" class="h-4" type="range" min="0" max="1" step="0.01">
+      </label>
+    </template>
+
+    <template v-else-if="selectedVariant === 'rgba'">
+      <label class="w-full flex flex-col">
+        <span>Red: {{ Math.round(rgba.r * 255) }}</span>
+        <input v-model.number="rgba.r" class="h-4" type="range" min="0" max="1" step="0.01">
+      </label>
+
+      <label class="w-full flex flex-col">
+        <span>Green: {{ Math.round(rgba.g * 255) }}</span>
+        <input v-model.number="rgba.g" class="h-4" type="range" min="0" max="1" step="0.01">
+      </label>
+
+      <label class="w-full flex flex-col">
+        <span>Blue: {{ Math.round(rgba.b * 255) }}</span>
+        <input v-model.number="rgba.b" class="h-4" type="range" min="0" max="1" step="0.01">
+      </label>
+    </template>
 
     <label v-if="showAlpha" class="w-full flex flex-col">
       <span>Alpha: {{ Math.round(hsla.a * 100) }}%</span>
@@ -174,6 +223,25 @@ function onMouseUp() {
   --lightness: 0.5;
 }
 
+.color-current {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  height: 2.5em;
+  margin: 0.5rem 0 0.5rem 0.5rem;
+  border-radius: 4px;
+}
+
+.color-current:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--current-color);
+}
+
 .color-wheel-wrapper {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -182,6 +250,10 @@ function onMouseUp() {
   position: relative;
   border: 1px solid var(--vp-c-border);
   background-color: #fff;
+}
+
+.color-wheel-wrapper,
+.color-current {
   background-image: repeating-linear-gradient(
       45deg,
       #aaa 25%,
@@ -211,6 +283,13 @@ function onMouseUp() {
   user-select: none;
   position: relative;
   z-index: 2;
+}
+
+.color-wheel-hue,
+.color-wheel-gray,
+.color-wheel-white,
+.color-wheel-black {
+  border-radius: 50%;
 }
 
 .color-wheel-hue {

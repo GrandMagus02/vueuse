@@ -1,10 +1,11 @@
 import type {
+  Color,
   ColorFormat,
-  ColorFormatValue,
   ColorHarmony,
 
 } from '../utils'
 import {
+  Harmony,
   analogousColors,
   complementaryColor,
   monochromaticColors,
@@ -32,20 +33,20 @@ export interface HarmonyColorOptions {
 }
 
 /**
- * Convert a color from one format to another.
+ * Convert a color from one output to another.
  * @param value - The color value to convert.
- * @param format - The format of the input color.
+ * @param format - The output of the input color.
  * @param harmony - The harmony to convert the color to.
  * @param options - The options for the conversion.
  */
 export function harmonyColor<TFormat extends ColorFormat, THarmony extends ColorHarmony>(
-  value: ColorFormatValue<TFormat>,
+  value: Color<TFormat>,
   format: TFormat,
   harmony: THarmony,
   options: HarmonyColorOptions = {},
-): ColorFormatValue<TFormat>[] {
+): Color<TFormat>[] {
   const { count, degree } = options
-  let colors: ColorFormatValue<TFormat>[] = []
+  let colors: Color<TFormat>[] = []
   switch (harmony.toLowerCase()) {
     case Harmony.COMPLEMENTARY:
       colors = [complementaryColor(value, format)]

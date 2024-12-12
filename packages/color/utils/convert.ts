@@ -1,10 +1,10 @@
 import type {
   CMYK,
   CMYKA,
+  Color,
+  ColorF,
+  ColorFA,
   ColorFormat,
-  ColorFormatAlpha,
-  ColorFormatAny,
-  ColorFormatValue,
   HEX,
   HEXA,
   HSL,
@@ -17,21 +17,15 @@ import type {
 import { formatsAll, formatsAlpha, formatsPairs,
 } from './format'
 
-type ConversionFunction<From extends ColorFormatAny, To extends ColorFormatAny> = (value: ColorFormatValue<From>) => ColorFormatValue<To>
+type ConversionFunction<From extends ColorFormat, To extends ColorFormat> = (value: Color<From>) => Color<To>
 type ConverterObject = {
-  [From in ColorFormatAny]: {
-    channels: string[]
-    keywords: string[]
-  } & {
-    [To in ColorFormatAny]?: ConversionFunction<From, To>
+  [From in ColorFormat]: {
+    [To in ColorFormat]?: ConversionFunction<From, To>
   }
 }
 type ConverterObjectStrict = {
-  [From in ColorFormatAny]: {
-    channels: string[]
-    keywords: string[]
-  } & {
-    [To in ColorFormatAny]: ConversionFunction<From, To>
+  [From in ColorFormat]: {
+    [To in ColorFormat]: ConversionFunction<From, To>
   }
 }
 
@@ -53,46 +47,17 @@ function removeAlpha<T extends object>(value: T): T {
 
 // Converter
 const convertSoft: ConverterObject = {
-  rgba: {
-    channels: ['r', 'g', 'b', 'a'],
-    keywords: ['rgba', 'RGBA'],
-  },
-  rgb: {
-    channels: ['r', 'g', 'b'],
-    keywords: ['rgb', 'RGB'],
-  },
-  hexa: {
-    channels: ['r', 'g', 'b', 'a'],
-    keywords: ['hexa', 'HEXA'],
-  },
-  hex: {
-    channels: ['r', 'g', 'b'],
-    keywords: ['hex', 'HEX'],
-  },
-  hsla: {
-    channels: ['h', 's', 'l', 'a'],
-    keywords: ['hsla', 'HSLA'],
-  },
-  hsl: {
-    channels: ['h', 's', 'l'],
-    keywords: ['hsl', 'HSL'],
-  },
-  hsva: {
-    channels: ['h', 's', 'v', 'a'],
-    keywords: ['hsva', 'HSVA'],
-  },
-  hsv: {
-    channels: ['h', 's', 'v'],
-    keywords: ['hsv', 'HSV'],
-  },
-  cmyka: {
-    channels: ['c', 'm', 'y', 'k', 'a'],
-    keywords: ['cmyka', 'CMYKA'],
-  },
-  cmyk: {
-    channels: ['c', 'm', 'y', 'k'],
-    keywords: ['cmyk', 'CMYK'],
-  },
+  rgba: {},
+  rgb: {},
+  hexa: {},
+  hex: {},
+  hsla: {},
+  hsl: {},
+  hsva: {},
+  hsv: {},
+  cmyka: {},
+  cmyk: {},
+  // oklab: {},
 }
 
 // RGB
@@ -216,9 +181,9 @@ convertSoft.rgba.cmyka = (value: RGBA) => {
 // HEX
 convertSoft.hex.rgb = (value: HEX) => {
   return {
-    r: value.r,
-    g: value.g,
-    b: value.b,
+    r: value.r / 255,
+    g: value.g / 255,
+    b: value.b / 255,
   } as RGB
 }
 convertSoft.hex.hexa = (value: HEX) => {
@@ -231,9 +196,9 @@ convertSoft.hex.hexa = (value: HEX) => {
 // HEXA
 convertSoft.hexa.rgba = (value: HEXA) => {
   return {
-    r: value.r,
-    g: value.g,
-    b: value.b,
+    r: value.r / 255,
+    g: value.g / 255,
+    b: value.b / 255,
     a: value.a,
   } as RGBA
 }
@@ -376,12 +341,12 @@ for (const from of formatsAll) {
         continue
       }
 
-      const fromIsAlpha = formatsAlpha.includes(from as ColorFormatAlpha)
-      const toIsAlpha = formatsAlpha.includes(to as ColorFormatAlpha)
+      const fromIsAlpha = formatsAlpha.includes(from as ColorFA)
+      const toIsAlpha = formatsAlpha.includes(to as ColorFA)
 
       if (fromIsAlpha && !toIsAlpha) {
         // Convert from alpha to non-alpha
-        convertSoft[from][to] = (value: ColorFormatValue<typeof from>) => {
+        convertSoft[from][to] = (value: Color<typeof from>) => {
           const rgbaValue = convertSoft[from]?.rgba?.(value as any)
           if (!rgbaValue)
             throw new Error(`Conversion from ${from} to rgba failed`)
@@ -396,7 +361,7 @@ for (const from of formatsAll) {
       }
       else if (!fromIsAlpha && toIsAlpha) {
         // Convert from non-alpha to alpha
-        convertSoft[from][to] = (value: ColorFormatValue<typeof from>) => {
+        convertSoft[from][to] = (value: Color<typeof from>) => {
           const rgbValue = convertSoft[from]?.rgb?.(value as any)
           if (!rgbValue)
             throw new Error(`Conversion from ${from} to rgb failed`)
@@ -411,7 +376,7 @@ for (const from of formatsAll) {
       }
       else if (fromIsAlpha && toIsAlpha) {
         // Convert between alpha formats
-        convertSoft[from][to] = (value: ColorFormatValue<typeof from>) => {
+        convertSoft[from][to] = (value: Color<typeof from>) => {
           const rgbaValue = convertSoft[from]?.rgba?.(value as any)
           if (!rgbaValue)
             throw new Error(`Conversion from ${from} to rgba failed`)
@@ -423,7 +388,7 @@ for (const from of formatsAll) {
       }
       else {
         // Convert between non-alpha formats
-        convertSoft[from][to] = (value: ColorFormatValue<typeof from>) => {
+        convertSoft[from][to] = (value: Color<typeof from>) => {
           const rgbValue = convertSoft[from]?.rgb?.(value as any)
           if (!rgbValue)
             throw new Error(`Conversion from ${from} to rgb failed`)
@@ -434,13 +399,12 @@ for (const from of formatsAll) {
         }
       }
 
-      if (formatsPairs[from as ColorFormat] === to) {
-        // @ts-expect-error - Type is too complex to be inferred
-        convertSoft[from][to] = addAlpha as ConversionFunction<ColorFormat, ColorFormatAlpha>
+      if (formatsPairs[from as ColorF] === to) {
+        convertSoft[from][to] = addAlpha as ConversionFunction<ColorF, ColorFA>
       }
-      else if (formatsPairs[to as ColorFormat] === from) {
+      else if (formatsPairs[to as ColorF] === from) {
         // @ts-expect-error - Type is too complex to be inferred
-        convertSoft[from][to] = removeAlpha as ConversionFunction<ColorFormatAlpha, ColorFormat>
+        convertSoft[from][to] = removeAlpha as ConversionFunction<ColorFA, ColorF>
       }
     }
   }

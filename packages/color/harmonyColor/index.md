@@ -2,7 +2,7 @@
 category: '@Color'
 ---
 
-# convertColor
+# harmonyColor
 
 Converts color between different formats.
 

@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import { useColor } from '@vueuse/color'
-import { ref } from 'vue-demi'
+import { stringifyColor, useColor } from '@vueuse/color'
 
-const value = ref({
-  r: 1,
-  g: 0,
-  b: 0,
-  a: 1,
-})
-const valueFormat = 'rgba'
-const hsla = useColor(value, valueFormat, { output: 'hsla', stringify: true })
-const rgba = useColor(value, valueFormat, { output: 'rgba', stringify: true })
-const hexa = useColor(value, valueFormat, { output: 'hexa', stringify: true })
-const hsva = useColor(value, valueFormat, { output: 'hsva', stringify: true })
-const cmyka = useColor(value, valueFormat, { output: 'cmyka', stringify: true })
+const rgba = useColor('rgba(255, 0, 0, 1)', { input: 'rgba' })
+const format = 'rgba'
+
+const hsla = useColor(rgba, { input: format, output: 'hsla', stringify: true, deep: false })
+const hexa = useColor(rgba, { input: format, output: 'hexa', stringify: true })
+const hsva = useColor(rgba, { input: format, output: 'hsva', stringify: true })
+const cmyka = useColor(rgba, { input: format, output: 'cmyka', stringify: true })
 </script>
 
 <template>
   <div class="flex gap-4 items-start">
-    <ColorPicker v-model="value" format="rgba" />
+    <ColorPicker v-model="rgba" format="rgba" />
     <div class="grid grid-cols-1 gap-2 grow">
       <div class="grid gap-1 items-center">
         <span>HSLA:</span>
@@ -26,7 +20,7 @@ const cmyka = useColor(value, valueFormat, { output: 'cmyka', stringify: true })
       </div>
       <div class="grid gap-1 items-center">
         <span>RGBA:</span>
-        <code>{{ rgba }}</code>
+        <code>{{ stringifyColor(rgba, 'rgba') }}</code>
       </div>
       <div class="grid gap-1 items-center">
         <span>HEXA:</span>
@@ -40,6 +34,10 @@ const cmyka = useColor(value, valueFormat, { output: 'cmyka', stringify: true })
         <span>CMYKA:</span>
         <code>{{ cmyka }}</code>
       </div>
+      <!-- <div class="grid gap-1 items-center"> -->
+      <!--  <span>OKLAB:</span> -->
+      <!--  <code>{{ oklab }}</code> -->
+      <!-- </div> -->
     </div>
   </div>
 </template>

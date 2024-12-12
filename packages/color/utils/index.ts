@@ -1,6 +1,6 @@
 export type {
-  ColorFormatAnyCase as ColorFormat,
-  ColorFormatValue,
+  ColorFormat,
+  Color,
   HEX,
   HEXA,
   RGB,
@@ -13,12 +13,14 @@ export type {
   CMYKA,
 } from './format'
 export type {
-  ColorHarmonyAnyCase as ColorHarmony,
+  ColorHarmony,
 } from './harmony'
 
 export { Format, ensureColorFormat, roundColor, isAlphaFormat, formats, formatsAll, formatsAlpha, formatsPairs } from './format'
 export { convert } from './convert'
 export { parse } from './parse'
 export { stringify } from './stringify'
+export { normalize } from './normalize'
+export { determinate } from './determinate'
 export * from './harmony'
 export * from './shift'

@@ -4,18 +4,30 @@ category: '@Color'
 
 # useHarmony
 
+Generate color harmonies like complementary, analogous, triadic, and more.
+
 ## Usage
 
 ```ts
-import { ColorHarmony, useHarmony } from '@vueuse/color'
+import { useHarmony } from '@vueuse/color'
 
-const complementary = useHarmony('rgb(255, 0, 0)', 'rgb')
-console.log(rgb.value) // { r: 1, g: 0, b: 0 }
+const complementary = useHarmony('rgb(255, 0, 0)', 'complementary', {
 
-const hex = useColor({ r: 1, g: 0, b: 0 }, 'rgb', {
+})
+console.log(complementary.value) // { r: 0, g: 1, b: 1 }
+```
+
+```ts
+import { useHarmony } from '@vueuse/color'
+
+const hex = useHarmony({ r: 1, g: 0, b: 0 }, 'rgb', {
   output: 'hex'
 })
 console.log(hex.value) // '#ff0000'
+```
+
+```ts
+import { useHarmony } from '@vueuse/color'
 
 const hsl = useColor(hex, 'hex', {
   output: 'hsl',
@@ -23,8 +35,13 @@ const hsl = useColor(hex, 'hex', {
   precision: 2,
 })
 console.log(hsl.value) // { h: 0, s: 1, l: 0.5 }
+```
 
-const hsv = useColor({ r: 1, g: 0, b: 0 }, Format.RGB, {
+```ts
+import { Format, useHarmony } from '@vueuse/color'
+
+const hsv = useColor({ r: 1, g: 0, b: 0 }, {
+  input: Format.RGB,
   output: Format.HSV,
   stringify: true,
 })
