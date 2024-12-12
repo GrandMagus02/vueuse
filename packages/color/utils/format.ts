@@ -49,28 +49,27 @@ export interface CMYK {
 export interface CMYKA extends CMYK, Alpha {
 }
 
-export type ColorFormatValue<T> =
-  T extends 'hexa' | 'HEXA' ? HEXA :
-    T extends 'hex' | 'HEX' ? HEX :
-      T extends 'rgba' | 'RGBA' ? RGBA :
-        T extends 'rgb' | 'RGB' ? RGB :
-          T extends 'hsla' | 'HSLA' ? HSLA :
-            T extends 'hsl' | 'HSL' ? HSL :
-              T extends 'hsva' | 'HSVA' ? HSVA :
-                T extends 'hsv' | 'HSV' ? HSV :
-                  T extends 'cmyka' | 'CMYKA' ? CMYKA :
-                    T extends 'cmyk' | 'CMYK' ? CMYK :
+export type Color<T = ColorFormat> =
+  T extends 'hexa' ? HEXA :
+    T extends 'hex' ? HEX :
+      T extends 'rgba' ? RGBA :
+        T extends 'rgb' ? RGB :
+          T extends 'hsla' ? HSLA :
+            T extends 'hsl' ? HSL :
+              T extends 'hsva' ? HSVA :
+                T extends 'hsv' ? HSV :
+                  T extends 'cmyka' ? CMYKA :
+                    T extends 'cmyk' ? CMYK :
                       never
 
-export type ColorFormat = 'rgb' | 'hex' | 'hsl' | 'hsv' | 'cmyk'
-export type ColorFormatAlpha = 'rgba' | 'hexa' | 'hsla' | 'hsva' | 'cmyka'
-export type ColorFormatAny = ColorFormat | ColorFormatAlpha
-export type ColorFormatAnyCase = ColorFormatAny | Uppercase<ColorFormatAny>
+export type ColorF = 'rgb' | 'hex' | 'hsl' | 'hsv' | 'cmyk'
+export type ColorFA = 'rgba' | 'hexa' | 'hsla' | 'hsva' | 'cmyka'
+export type ColorFormat = ColorF | ColorFA
 
-export const formats: ColorFormat[] = ['rgb', 'hex', 'hsl', 'hsv', 'cmyk'] as const
-export const formatsAlpha: ColorFormatAlpha[] = ['rgba', 'hexa', 'hsla', 'hsva', 'cmyka'] as const
-export const formatsAll: ColorFormatAny[] = [...formatsAlpha, ...formats] as const
-export const formatsPairs: Record<ColorFormat, ColorFormatAlpha> = {
+export const formats: ColorF[] = ['rgb', 'hex', 'hsl', 'hsv', 'cmyk'] as const
+export const formatsAlpha: ColorFA[] = ['rgba', 'hexa', 'hsla', 'hsva', 'cmyka'] as const
+export const formatsAll: ColorFormat[] = [...formatsAlpha, ...formats] as const
+export const formatsPairs: Record<ColorF, ColorFA> = {
   rgb: 'rgba',
   hex: 'hexa',
   hsl: 'hsla',
@@ -89,19 +88,20 @@ export const Format = {
   HSVA: 'hsva',
   CMYK: 'cmyk',
   CMYKA: 'cmyka',
+  // OKLAB: 'oklab',
 } as const
 
-export function ensureColorFormat(format: string): ColorFormatAny {
-  if (formats.includes(format.toLowerCase() as ColorFormat)) {
-    return format as ColorFormat
+export function ensureColorFormat<T extends ColorFormat>(format: string): T {
+  if (formats.includes(format.toLowerCase() as ColorF)) {
+    return format as T
   }
-  if (formatsAlpha.includes(format.toLowerCase() as ColorFormatAlpha)) {
-    return format as ColorFormatAlpha
+  if (formatsAlpha.includes(format.toLowerCase() as ColorFA)) {
+    return format as T
   }
   throw new Error(`Invalid color format: ${format}`)
 }
 
-export function roundColor<T extends ColorFormatValue<ColorFormatAny>>(
+export function roundColor<T extends Color>(
   value: T,
   precision: number = 0,
 ): T {
@@ -115,6 +115,6 @@ export function roundColor<T extends ColorFormatValue<ColorFormatAny>>(
   return valueCopy as T
 }
 
-export function isAlphaFormat(value: ColorFormatAnyCase | string): value is ColorFormatAlpha {
-  return formatsAlpha.includes(ensureColorFormat(value) as ColorFormatAlpha)
+export function isAlphaFormat(value: ColorFormat | string): value is ColorFA {
+  return formatsAlpha.includes(ensureColorFormat(value) as ColorFA)
 }

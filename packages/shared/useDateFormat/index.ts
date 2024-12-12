@@ -6,7 +6,7 @@ export type DateLike = Date | number | string | undefined
 
 export interface UseDateFormatOptions {
   /**
-   * The locale(s) to used for dd/ddd/dddd/MMM/MMMM format
+   * The locale(s) to used for dd/ddd/dddd/MMM/MMMM output
    *
    * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument).
    */
@@ -107,8 +107,8 @@ export function normalizeDate(date: DateLike) {
  * Get the formatted date according to the string of tokens passed in.
  *
  * @see https://vueuse.org/useDateFormat
- * @param date - The date to format, can either be a `Date` object, a timestamp, or a string
- * @param formatStr - The combination of tokens to format the date
+ * @param date - The date to output, can either be a `Date` object, a timestamp, or a string
+ * @param formatStr - The combination of tokens to output the date
  * @param options - UseDateFormatOptions
  */
 

@@ -1,9 +1,9 @@
-import type { ColorFormatAny, ColorFormatValue } from './format'
+import type { Color, ColorFormatLower } from './format'
 
 type Delimiter = ',' | ' '
 
 type StringifyObjectStrict = {
-  [F in ColorFormatAny]: (value: ColorFormatValue<F>, delimiter?: Delimiter) => string
+  [F in ColorFormatLower]: (value: Color<F>, delimiter?: Delimiter) => string
 }
 
 function buildString(func: string, channels: number[], alpha?: number, delimiter: Delimiter = ',') {

@@ -9,26 +9,45 @@ Converts color between different formats.
 ## Usage
 
 ```ts
-import { ColorFormat, useColor } from '@vueuse/color'
+import { useColor } from '@vueuse/color'
 
-const rgb = useColor('rgb(255, 0, 0)', 'rgb')
-console.log(rgb.value) // { r: 1, g: 0, b: 0 }
+const rgb = useColor('rgb(255, 0, 0)') // auto detect input output
+console.log(rgb) // reactive { r: 1, g: 0, b: 0 }
+```
 
-const hex = useColor({ r: 1, g: 0, b: 0 }, 'rgb', {
+> **NOTE**: If you know what the input and output are, it's better to explicitly set them.
+
+```ts
+import { useColor } from '@vueuse/color'
+
+const hex = useColor({ h: 1, s: 2, l: 1, r: 1, g: 0, b: 0 }, {
+  input: 'rgb', // explicitly set input
   output: 'hex'
 })
-console.log(hex.value) // '#ff0000'
+console.log(hex) // '#ff0000'
+```
 
-const hsl = useColor(hex, 'hex', {
+```ts
+import { useColor } from '@vueuse/color'
+
+const hex = useColor('#ff0000')
+const hsl = useColor(hex, {
   output: 'hsl',
-  round: true,
-  precision: 2,
+  round: true, // round the output values, this can lead to unexpected results
+  precision: 2, // works only when round is true
 })
-console.log(hsl.value) // { h: 0, s: 1, l: 0.5 }
+console.log(hsl) // { h: 0, s: 1, l: 0.5 }
 
-const hsv = useColor({ r: 1, g: 0, b: 0 }, ColorFormat.RGB, {
-  output: ColorFormat.HSV,
-  stringify: true,
+hsl.l = 1 // modifing the value will update the original value
+console.log(hex) // '#ffffff'
+```
+
+```ts
+import { ColorFormat, useColor } from '@vueuse/color'
+
+const hsv = useColor({ r: 1, g: 0, b: 0 }, {
+  output: ColorFormat.HSV, // use enum for output output
+  stringify: true, // stringify the output
 })
-console.log(hsv.value) // 'hsv(0, 100%, 100%)'
+console.log(hsv.value) // 'hsv(0, 100%, 50%)'
 ```

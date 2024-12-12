@@ -1,7 +1,8 @@
-import type { ColorFormatAny, ColorFormatValue } from './format'
+import type { Color, ColorFormat } from './format'
+import { Format } from './format'
 import { parse } from './parse'
 
-const determinantChain: ColorFormatAny[] = [
+const determinantChain: ColorFormat[] = [
   Format.RGBA,
   Format.RGB,
   Format.HEXA,
@@ -14,13 +15,17 @@ const determinantChain: ColorFormatAny[] = [
   Format.CMYK,
 ] as const
 
-export function determinate<T extends ColorFormatAny>(value: unknown): [ColorFormatValue<T>, T] | undefined {
+export function determinate<T extends ColorFormat>(value: unknown): {
+  value: Color<T>
+  format: T
+} {
   for (const format of determinantChain) {
     try {
-      return [parse[format](value) as ColorFormatValue<T>, format as T]
+      return { value: parse[format](value) as Color<T>, format: format as T }
     }
     catch {
       // pass
     }
   }
+  throw new Error('Invalid color output')
 }

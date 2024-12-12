@@ -42,7 +42,7 @@ export async function getChangeLog(count = 200) {
 
 export async function getContributorsAt(path: string) {
   try {
-    const list = (await git.raw(['log', '--pretty=format:"%an|%ae"', '--', path]))
+    const list = (await git.raw(['log', '--pretty=output:"%an|%ae"', '--', path]))
       .split('\n')
       .map(i => i.slice(1, -1).split('|') as [string, string])
     const map: Record<string, ContributorInfo> = {}

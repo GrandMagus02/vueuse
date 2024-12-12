@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ColorHarmony, RGBA } from '@vueuse/color'
-import { stringifyColor } from '@vueuse/color'
+import { Harmony, stringifyColor } from '@vueuse/color'
 import { computed, ref, toValue } from 'vue-demi'
 import { useHarmony } from './index'
 
@@ -12,15 +12,15 @@ const value = ref({
 })
 const valueString = computed(() => stringifyColor(value.value, 'rgba'))
 const valueFormat = 'rgba'
-const complementaryColors = useHarmony(value, valueFormat, Harmony.COMPLEMENTARY)
-const splitComplementaryColors = useHarmony(value, valueFormat, Harmony.SPLIT_COMPLEMENTARY)
-const analogousColors = useHarmony(value, valueFormat, Harmony.ANALOGOUS)
-const squareColors = useHarmony(value, valueFormat, Harmony.SQUARE)
-const triadicColors = useHarmony(value, valueFormat, Harmony.TRIADIC)
-const tetradicColors = useHarmony(value, valueFormat, Harmony.TETRADIC)
-const monochromaticColors = useHarmony(value, valueFormat, Harmony.MONOCHROMATIC)
-const shadesColors = useHarmony(value, valueFormat, Harmony.SHADES)
-const tintsColors = useHarmony(value, valueFormat, Harmony.TINTS)
+const complementaryColors = useHarmony(value, Harmony.COMPLEMENTARY, { output: valueFormat })
+const splitComplementaryColors = useHarmony(value, Harmony.SPLIT_COMPLEMENTARY, { output: valueFormat })
+const analogousColors = useHarmony(value, Harmony.ANALOGOUS, { output: valueFormat })
+const squareColors = useHarmony(value, Harmony.SQUARE, { output: valueFormat })
+const triadicColors = useHarmony(value, Harmony.TRIADIC, { output: valueFormat })
+const tetradicColors = useHarmony(value, Harmony.TETRADIC, { output: valueFormat })
+const monochromaticColors = useHarmony(value, Harmony.MONOCHROMATIC, { output: valueFormat })
+const shadesColors = useHarmony(value, Harmony.SHADES, { output: valueFormat })
+const tintsColors = useHarmony(value, Harmony.TINTS, { output: valueFormat })
 
 const harmony = ref<ColorHarmony>(Harmony.COMPLEMENTARY)
 const colors = computed<RGBA[]>(() => {

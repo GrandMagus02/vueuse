@@ -1,15 +1,14 @@
-import type { ColorFormat, ColorFormatValue } from '../utils'
-import { parse } from '../utils'
-import { ensureColorFormat } from '../utils/format'
+import type { Color, ColorFormat } from '../utils'
+import { ensureColorFormat, parse } from '../utils'
 
 /**
- * Convert a color from one format to another.
+ * Convert a color from one output to another.
  * @param value - The color value to convert.
- * @param output - The format of the output color.
+ * @param format - The format of the color.
  */
-export function parseColor<TOutput extends ColorFormat>(
+export function parseColor<TFormat extends ColorFormat>(
   value: any,
-  output: TOutput,
-): ColorFormatValue<TOutput> {
-  return parse[ensureColorFormat(output)](value) as ColorFormatValue<TOutput>
+  format: TFormat,
+): Color<TFormat | ColorFormat> {
+  return parse[ensureColorFormat(format)](value)
 }
