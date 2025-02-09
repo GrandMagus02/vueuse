@@ -17,19 +17,19 @@ import {
   triadicColors,
 } from '../utils'
 
-export interface HarmonyColorOptions {
+export interface HarmonyColorOptions<T = number> {
   /**
    * Amount of colors to generate.
    */
-  count?: number
+  count?: T
   /**
-   * Step degree for the color to generate. (e.g. 30, 45)
+   * Step angle for the color to generate. (e.g. 30, 45)
    */
-  degree?: number
+  angle?: T
   /**
    * Step number for the color to generate. (e.g. 0.1, 0.25)
    */
-  step?: number
+  step?: T
 }
 
 /**
@@ -45,35 +45,35 @@ export function harmonyColor<TFormat extends ColorFormat, THarmony extends Color
   harmony: THarmony,
   options: HarmonyColorOptions = {},
 ): Color<TFormat>[] {
-  const { count, degree } = options
+  const { count, angle, step } = options
   let colors: Color<TFormat>[] = []
   switch (harmony.toLowerCase()) {
     case Harmony.COMPLEMENTARY:
       colors = [complementaryColor(value, format)]
       break
     case Harmony.ANALOGOUS:
-      colors = analogousColors(value, format, degree, count)
+      colors = analogousColors(value, format, angle, count)
       break
     case Harmony.TRIADIC:
       colors = triadicColors(value, format)
       break
     case Harmony.SPLIT_COMPLEMENTARY:
-      colors = splitComplementaryColors(value, format, degree, count)
+      colors = splitComplementaryColors(value, format, angle)
       break
     case Harmony.SQUARE:
       colors = squareColors(value, format)
       break
     case Harmony.TETRADIC:
-      colors = tetradicColors(value, format)
+      colors = tetradicColors(value, format, angle)
       break
     case Harmony.MONOCHROMATIC:
-      colors = monochromaticColors(value, format)
+      colors = monochromaticColors(value, format, count, step)
       break
     case Harmony.TINTS:
-      colors = tintColors(value, format)
+      colors = tintColors(value, format, count, step)
       break
     case Harmony.SHADES:
-      colors = shadeColors(value, format)
+      colors = shadeColors(value, format, count, step)
       break
     default:
       throw new Error(`Unknown harmony: ${harmony}`)

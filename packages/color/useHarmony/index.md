@@ -11,17 +11,15 @@ Generate color harmonies like complementary, analogous, triadic, and more.
 ```ts
 import { useHarmony } from '@vueuse/color'
 
-const complementary = useHarmony('rgb(255, 0, 0)', 'complementary', {
-
-})
-console.log(complementary.value) // { r: 0, g: 1, b: 1 }
+const colors = useHarmony('rgb(255, 0, 0)', 'complementary') // returns array of colors
+console.log(colors.value[0]) // { r: 0, g: 1, b: 1 }
 ```
 
 ```ts
-import { useHarmony } from '@vueuse/color'
+import { Harmony, useHarmony } from '@vueuse/color'
 
-const hex = useHarmony({ r: 1, g: 0, b: 0 }, 'rgb', {
-  output: 'hex'
+const analogous = useHarmony({ r: 1, g: 0, b: 0 }, Harmony.ANALOGOUS, {
+  angle: 60, // angle between colors
 })
 console.log(hex.value) // '#ff0000'
 ```
@@ -29,10 +27,9 @@ console.log(hex.value) // '#ff0000'
 ```ts
 import { useHarmony } from '@vueuse/color'
 
-const hsl = useColor(hex, 'hex', {
+const hsl = useColor(hex, {
   output: 'hsl',
-  round: true,
-  precision: 2,
+  precision: 2, // round the output values
 })
 console.log(hsl.value) // { h: 0, s: 1, l: 0.5 }
 ```

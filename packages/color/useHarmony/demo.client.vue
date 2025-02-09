@@ -10,19 +10,29 @@ const value = ref({
   b: 0,
   a: 1,
 })
+
+const angle = ref(20)
+const count = ref(2)
+const step = ref(0.1)
+
+const harmony = ref<ColorHarmony>(Harmony.COMPLEMENTARY)
+
+const showAngle = computed(() => harmony.value === Harmony.SPLIT_COMPLEMENTARY || harmony.value === Harmony.ANALOGOUS || harmony.value === Harmony.TETRADIC)
+const showCount = computed(() => harmony.value === Harmony.SPLIT_COMPLEMENTARY || harmony.value === Harmony.ANALOGOUS || harmony.value === Harmony.SQUARE || harmony.value === Harmony.TETRADIC || harmony.value === Harmony.MONOCHROMATIC || harmony.value === Harmony.SHADES || harmony.value === Harmony.TINTS)
+const showStep = computed(() => harmony.value === Harmony.MONOCHROMATIC || harmony.value === Harmony.SHADES || harmony.value === Harmony.TINTS)
+
 const valueString = computed(() => stringifyColor(value.value, 'rgba'))
 const valueFormat = 'rgba'
 const complementaryColors = useHarmony(value, Harmony.COMPLEMENTARY, { output: valueFormat })
-const splitComplementaryColors = useHarmony(value, Harmony.SPLIT_COMPLEMENTARY, { output: valueFormat })
-const analogousColors = useHarmony(value, Harmony.ANALOGOUS, { output: valueFormat })
+const splitComplementaryColors = useHarmony(value, Harmony.SPLIT_COMPLEMENTARY, { output: valueFormat, angle, count })
+const analogousColors = useHarmony(value, Harmony.ANALOGOUS, { output: valueFormat, angle, count })
 const squareColors = useHarmony(value, Harmony.SQUARE, { output: valueFormat })
 const triadicColors = useHarmony(value, Harmony.TRIADIC, { output: valueFormat })
-const tetradicColors = useHarmony(value, Harmony.TETRADIC, { output: valueFormat })
-const monochromaticColors = useHarmony(value, Harmony.MONOCHROMATIC, { output: valueFormat })
-const shadesColors = useHarmony(value, Harmony.SHADES, { output: valueFormat })
-const tintsColors = useHarmony(value, Harmony.TINTS, { output: valueFormat })
+const tetradicColors = useHarmony(value, Harmony.TETRADIC, { output: valueFormat, angle })
+const monochromaticColors = useHarmony(value, Harmony.MONOCHROMATIC, { output: valueFormat, count, step })
+const shadesColors = useHarmony(value, Harmony.SHADES, { output: valueFormat, count, step })
+const tintsColors = useHarmony(value, Harmony.TINTS, { output: valueFormat, count, step })
 
-const harmony = ref<ColorHarmony>(Harmony.COMPLEMENTARY)
 const colors = computed<RGBA[]>(() => {
   switch (harmony.value) {
     case Harmony.COMPLEMENTARY:
@@ -61,6 +71,18 @@ const stringifyColors = (colors: any[], format: string) => colors.map(color => s
             {{ key }}
           </option>
         </select>
+        <template v-if="showAngle">
+          <span>Angle: {{ angle }}°</span>
+          <input v-model.number="angle" type="range" min="0" max="360" step="1">
+        </template>
+        <template v-if="showCount">
+          <span>Count: {{ count }}</span>
+          <input v-model.number="count" type="range" min="2" max="6" step="1">
+        </template>
+        <template v-if="showStep">
+          <span>Step: {{ step * 100 }}%</span>
+          <input v-model.number="step" type="range" min="0.05" max="0.15" step="0.01">
+        </template>
         <div class="flex gap-1 items-center">
           <span class="w-1.5em h-1.5em rounded inline-block" :style="{ background: valueString }" />
           <code>{{ valueString }}</code>

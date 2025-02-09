@@ -26,13 +26,18 @@ export function complementaryColor<T extends ColorFormat>(color: Color<T>, forma
 export function analogousColors<T extends ColorFormat>(
   color: Color<T>,
   format: T,
-  degree: number = 30,
-  count: number = 1,
+  angle: number = 60,
+  count: number = 2,
 ): Color<T>[] {
-  const shifts = Array.from({ length: count * 2 }, (_, index) => {
-    return (index < count ? index - count : index - count + 1) * (degree % 360)
+  count = count % 2 === 0 ? count : count + 1
+  const shiftsLeft = Array.from({ length: count / 2 }, (_, index) => {
+    return (index + 1) * ((angle / count) % 360)
   })
-  const hslColors = Array.from({ length: count * 2 }, () => {
+  const shiftsRight = Array.from({ length: count / 2 }, (_, index) => {
+    return (index + 1) * -((angle / count) % 360)
+  })
+  const shifts = [...shiftsLeft, ...shiftsRight]
+  const hslColors = Array.from({ length: count }, () => {
     return convert[ensureColorFormat(format)].hsl(color as any)
   })
   return hslColors.map((hsl, index) => {
@@ -55,11 +60,11 @@ export function triadicColors<T extends ColorFormat>(color: Color<T>, format: T)
 export function splitComplementaryColors<T extends ColorFormat>(
   color: Color<T>,
   format: T,
-  degree: number = 30,
-  count: number = 1,
+  angle: number = 60,
 ): Color<T>[] {
+  const count = 1
   const shifts = Array.from({ length: count * 2 }, (_, index) => {
-    return (index < count ? index - count : index - count + 1) * ((180 - degree) % 360)
+    return (index < count ? index - count : index - count + 1) * ((180 - (angle / 2)) % 360)
   })
   const hslColors = Array.from({ length: count * 2 }, () => {
     return convert[ensureColorFormat(format)].hsl(color as any)
@@ -87,8 +92,9 @@ export function squareColors<T extends ColorFormat>(
 export function tetradicColors<T extends ColorFormat>(
   color: Color<T>,
   format: T,
+  angle: number = 120,
 ): Color<T>[] {
-  const shifts = [60, 180, 240]
+  const shifts = [((angle / 2) % 360), 180, 180 + ((angle / 2) % 360)]
   const hslColors = shifts.map(() => {
     return convert[ensureColorFormat(format)].hsl(color as any)
   })

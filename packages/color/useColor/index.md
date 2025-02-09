@@ -33,20 +33,19 @@ import { useColor } from '@vueuse/color'
 const hex = useColor('#ff0000')
 const hsl = useColor(hex, {
   output: 'hsl',
-  round: true, // round the output values, this can lead to unexpected results
-  precision: 2, // works only when round is true
+  precision: 2, // round the output values
 })
 console.log(hsl) // { h: 0, s: 1, l: 0.5 }
 
 hsl.l = 1 // modifing the value will update the original value
-console.log(hex) // '#ffffff'
+console.log(hex) // { r: 1, g: 1, b: 1, hex: '#ffffff' }
 ```
 
 ```ts
 import { ColorFormat, useColor } from '@vueuse/color'
 
 const hsv = useColor({ r: 1, g: 0, b: 0 }, {
-  output: ColorFormat.HSV, // use enum for output output
+  output: ColorFormat.HSV, // use enum for output
   stringify: true, // stringify the output
 })
 console.log(hsv.value) // 'hsv(0, 100%, 50%)'

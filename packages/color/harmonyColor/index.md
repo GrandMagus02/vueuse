@@ -9,14 +9,18 @@ Converts color between different formats.
 ## Usage
 
 ```ts
-import { convertColor } from '@vueuse/color'
+import { harmonyColor } from '@vueuse/color'
 
-const hex = convertColor({ r: 1, g: 0, b: 0, }, 'rgb', 'hex')
-console.log(hex) // '#ff0000'
+const complementary = harmonyColor({ r: 1, g: 0, b: 0, }, 'rgb') // by default, it will return complementary color
+console.log(complementary) // [{ r: 0, g: 1, b: 1 }]
+```
 
-const cmyk = convertColor('#d72828', 'hex', 'cmyk', {
-  round: true,
-  precision: 2,
+```ts
+import { Harmony, harmonyColor } from '@vueuse/color'
+
+const analogous = harmonyColor({ r: 1, g: 0, b: 0 }, 'rgb', Harmony.ANALOGOUS, {
+  count: 2, // for analogous it will return 2 colors
+  angle: 60, // angle between colors
 })
-console.log(rgb) // { "c": 0, "m": 0.8235, "y": 0.8235, "k": 0.15, "a": 1 }
+console.log(rgb) // [{ r: 1, g: 0.5, b: 0 }, { r: 1, g: 0, b: 0.5 }]
 ```
