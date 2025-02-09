@@ -130,6 +130,7 @@ Color utilities for VueUse
 - [`parseColor`](https://vueuse.org/color/parseColor/) — parses color string into object
 - [`stringifyColor`](https://vueuse.org/color/stringifyColor/) — converts color to string
 - [`useColor`](https://vueuse.org/color/useColor/) — converts color between different formats
+- [`useColorProps`](https://vueuse.org/color/useColorProps/) — converts color between different formats
 - [`useHarmony`](https://vueuse.org/color/useHarmony/) — generate color harmonies like complementary
 
 <!--ADDONS_LIST_ENDS-->

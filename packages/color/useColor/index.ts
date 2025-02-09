@@ -1,7 +1,8 @@
 import type {
-  MaybeRefOrGetter
-  ,
-  type Ref,
+  MaybeRefOrGetter,
+  Ref,
+} from 'vue-demi'
+import {
   computed,
   isRef,
   reactive,

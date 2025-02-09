@@ -1,5 +1,5 @@
 import type { MaybeRefOrGetter, Ref, WatchOptionsBase } from 'vue-demi'
-import { computed, toValue } from 'vue-demi'
+import { computed, ref, toValue, watch } from 'vue-demi'
 import { computedEager } from '@vueuse/shared'
 import type { Color, ColorFormat, ColorHarmony } from '../utils'
 import type { HarmonyColorOptions } from '../harmonyColor'
@@ -9,7 +9,7 @@ import { determinate } from '../utils'
 import { normalizeColor } from '../normalizeColor'
 import { convertColor } from '../convertColor'
 
-export interface UseHarmonyOptions<TInput extends ColorFormat, TOutput extends ColorFormat> extends HarmonyColorOptions, WatchOptionsBase {
+export interface UseHarmonyOptions<TInput extends ColorFormat, TOutput extends ColorFormat> extends HarmonyColorOptions<MaybeRefOrGetter<number>>, WatchOptionsBase {
   input?: TInput
   output?: TOutput
   [key: string]: any
@@ -28,8 +28,25 @@ export function useHarmony<TInput extends ColorFormat, TOutput extends ColorForm
     flush,
     onTrack,
     onTrigger,
+    count,
+    angle,
+    step,
     ...restOptions
   } = options
+
+  const harmonyOptions = ref({ count: toValue(count), angle: toValue(angle), step: toValue(step) })
+
+  watch([
+    () => toValue(count),
+    () => toValue(angle),
+    () => toValue(step),
+  ], (newValues) => {
+    harmonyOptions.value = {
+      count: toValue(newValues[0]),
+      angle: toValue(newValues[1]),
+      step: toValue(newValues[2]),
+    }
+  })
 
   interface ParsedInputValue { value: Color<TInput>, format: TInput }
 
@@ -56,7 +73,7 @@ export function useHarmony<TInput extends ColorFormat, TOutput extends ColorForm
       return harmony(
         determinedValue,
         determinedFormat,
-        { ...restOptions },
+        { ...harmonyOptions.value, ...restOptions },
       ) as Color<TOutput>[]
     }
 
@@ -64,9 +81,11 @@ export function useHarmony<TInput extends ColorFormat, TOutput extends ColorForm
       determinedValue,
       determinedFormat,
       harmony,
-      { ...restOptions },
+      harmonyOptions.value,
     ) as Color<TInput>[]
 
-    return colors.map(color => convertColor(color, determinedFormat, output || determinedFormat)) as Color<TOutput>[]
+    return colors.map(color =>
+      convertColor(color, determinedFormat, output || determinedFormat),
+    ) as Color<TOutput>[]
   }, { flush, onTrack, onTrigger })
 }
