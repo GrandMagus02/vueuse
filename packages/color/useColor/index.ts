@@ -1,132 +1,170 @@
-import type {
-  MaybeRefOrGetter,
-  Ref,
-} from 'vue-demi'
-import {
-  computed,
-  isRef,
-  reactive,
-  ref,
-  toValue,
-} from 'vue-demi'
-import type { IgnoredUpdater } from '@vueuse/shared'
+import type { MaybeRefOrGetter, Ref, UnwrapRef } from 'vue-demi'
+import { isReactive, isReadonly, isRef, ref, toValue, watch } from 'vue-demi'
 import { watchIgnorable } from '@vueuse/shared'
 import type { Color, ColorFormat } from '../utils'
-import type { ConvertColorOptions } from '../convertColor'
-import { convertColor } from '../convertColor'
-import { parseColor } from '../parseColor'
+import { Format, convert, fallback, normalize } from '../utils'
 import { stringifyColor } from '../stringifyColor'
-import { determinate } from '../utils'
-import { normalizeColor } from '../normalizeColor'
+import { parseColor } from '../parseColor'
+import type { ColorStringifyOptions } from '../utils/stringifies/common'
+import { INVALID_COLOR_VALUE } from '../utils/errors'
+import { convertColor } from '../convertColor'
 
-export interface UseColorOptions<
-  TInput extends ColorFormat,
-  TOutput extends ColorFormat,
-  TStringify extends boolean = false,
-> extends ConvertColorOptions {
-  input?: MaybeRefOrGetter<TInput>
-  output?: MaybeRefOrGetter<TOutput>
+export interface UseColorOptions<TOutput extends ColorFormat = ColorFormat, TInput extends ColorFormat = ColorFormat, TStringify extends boolean = false, TError extends boolean = false> extends ColorStringifyOptions {
+  /**
+   * Whether to stringify the output value.
+   * @default false
+   */
   stringify?: MaybeRefOrGetter<TStringify>
+  /**
+   * Whether the input value must mutate on output change.
+   * @default false
+   */
+  mutateInput?: MaybeRefOrGetter<boolean>
+  /**
+   * Define which format to use for parsing.
+   */
+  format?: TInput
+  /**
+   * Fallback value if the format is not determined.
+   */
+  fallback?: Color<TOutput>
+  /**
+   * Origin color value to use for conversion.
+   */
+  origin?: MaybeRefOrGetter<unknown>
+  /**
+   * Whether to throw an error when the color value is invalid.
+   * @default false
+   */
+  throwOnError?: TError
 }
 
-export function useColor<
-  TInput extends ColorFormat,
-  TOutput extends ColorFormat = TInput,
-  TStringify extends boolean = false,
->(
-  inputValue: MaybeRefOrGetter<Color<TInput> | string | undefined>,
-  options: UseColorOptions<TInput, TOutput, TStringify> = {},
+export function useColor<TFormat extends ColorFormat, TInput extends ColorFormat = ColorFormat>(value: MaybeRefOrGetter<unknown>, format?: TFormat, options?: UseColorOptions<TFormat, TInput, false, true>): Ref<Color<TFormat>>
+export function useColor<TFormat extends ColorFormat, TInput extends ColorFormat = ColorFormat>(value: MaybeRefOrGetter<unknown>, format?: TFormat, options?: UseColorOptions<TFormat, TInput, true, true>): Ref<string>
+export function useColor<TFormat extends ColorFormat, TInput extends ColorFormat = ColorFormat>(value: MaybeRefOrGetter<unknown>, format?: TFormat, options?: UseColorOptions<TFormat, TInput, true>): Ref<string | undefined>
+export function useColor<TFormat extends ColorFormat, TInput extends ColorFormat = ColorFormat>(value: MaybeRefOrGetter<unknown>, format?: TFormat, options?: UseColorOptions<TFormat, TInput>): Ref<Color<TFormat> | undefined>
+export function useColor<TOutput extends ColorFormat, TInput extends ColorFormat = ColorFormat>(
+  value: MaybeRefOrGetter<unknown>,
+  format?: MaybeRefOrGetter<TOutput>,
+  options: UseColorOptions<TOutput, TInput, boolean, boolean> = {},
 ) {
+  format = toValue(format)
+  value = toValue(value)
+
+  if (!format) {
+    format = Format.HEX as TOutput
+  }
+
+  const mutateInput = toValue(options.mutateInput) ?? true
+  const throwOnError = options.throwOnError
+
   const {
-    input,
-    output = input,
+    fallback: _fallback = fallback[format],
+    alpha,
+    syntax,
+    percentage,
     precision,
-    stringify = false,
   } = options
 
-  interface ParsedInputValue { value: Color<TInput>, format: TInput }
+  const stringify = toValue(options.stringify)
+  const stringifyOptions = { alpha, syntax, percentage, precision }
 
-  // Compute the parsed value
-  const parsedValue = computed<ParsedInputValue>(() => {
-    const val = toValue(inputValue)
-    const inputFormat = toValue(input)
+  const output = ref<string | Color<TOutput> | undefined>(_fallback)
 
-    if (inputFormat) {
-      const parsed = parseColor(val, inputFormat)
-      return { value: normalizeColor(parsed, inputFormat), format: inputFormat } as ParsedInputValue
+  const updateColor = () => {
+    let inputValue = value
+
+    const parsedInput = parseColor<TInput>(inputValue)
+    const parsedOutput = parseColor(toValue(output), { format })
+
+    if (!parsedInput || !parsedOutput)
+      return
+
+    const result = normalize[format](parsedOutput.color)
+
+    const origin = toValue(options.origin)
+    if (origin) {
+      const originColor = convertColor<TOutput>(origin, format) as Color<TOutput>
+      if (originColor) {
+        for (const key in result) {
+          if (result[key] === null) {
+            if (originColor[key] !== null) {
+              result[key] = originColor[key]
+            }
+            else {
+              result[key] = fallback[format][key]
+            }
+          }
+        }
+      }
     }
 
-    const { value: detVal, format } = determinate(val)
-    return { value: normalizeColor(detVal, format), format } as ParsedInputValue
-  })
-
-  // Determine the output value type
-  const outputValue: TStringify extends true
-    ? Ref<string>
-    : Color<TOutput> = stringify ? ref('') : reactive({}) as any
-
-  let ignoreInputUpdates: null | IgnoredUpdater = null
-
-  // Watch for changes in the output value
-  const { ignoreUpdates: ignoreOutputUpdates } = watchIgnorable(
-    outputValue,
-    (newVal) => {
-      const outFormat = toValue(output) || parsedValue.value.format
-      const inFormat = parsedValue.value.format
-
-      const parsed = parseColor(newVal, outFormat)
-      const normalized = normalizeColor(parsed, outFormat)
-      const converted = convertColor(normalized, outFormat, inFormat, { precision })
-      const final = stringify
-        ? stringifyColor(converted, inFormat)
-        : (converted as Color<TInput>)
-
-      if (ignoreInputUpdates) {
-        ignoreInputUpdates(() => {
-          if (isRef(inputValue)) {
-            inputValue.value = final
-          }
-          else if (typeof inputValue === 'object') {
-            Object.assign(inputValue, final)
-          }
-        })
+    const converted = normalize[parsedInput.format](convert[format][parsedInput.format](result, options) as Color<TInput>)
+    for (const key in converted) {
+      if (converted[key] === null) {
+        converted[key] = fallback[parsedInput.format][key]
       }
+    }
 
-      // if (JSON.stringify(parsed) === JSON.stringify(normalized)) return;
+    if (typeof inputValue === 'object' && inputValue !== null) {
+      Object.assign(inputValue, converted)
+    }
+    else if (typeof inputValue === 'string') {
+      inputValue = stringifyColor(converted, { format: parsedInput.format, ...stringifyOptions })
+    }
 
-      // if (isRef(outputValue) && typeof toValue(outputValue) === 'string') {
-      //   outputValue.value = stringifyColor(normalized, outFormat);
-      // } else {
-      //   Object.assign(outputValue, normalized);
-      // }
+    if (isReadonly(value))
+      return
+
+    if (isRef(value)) {
+      value.value = inputValue
+    }
+    else if (isReactive(value) && typeof value === 'object' && value !== null) {
+      Object.assign(value, inputValue)
+    }
+  }
+
+  const { ignoreUpdates } = watchIgnorable(
+    [() => output.value, () => mutateInput],
+    () => {
+      if (mutateInput) {
+        updateColor()
+      }
     },
     { deep: true },
   )
 
-  // Watch for changes in the input value
-  const { ignoreUpdates } = watchIgnorable(
-    () => toValue(inputValue),
-    (newVal) => {
-      const outFormat = toValue(output) || parsedValue.value.format
-      const inFormat = parsedValue.value.format
-
-      const parsed = parseColor(newVal, inFormat)
-      const normalized = normalizeColor(parsed, inFormat)
-      const converted = convertColor(normalized, inFormat, outFormat, { precision })
-
-      ignoreOutputUpdates(() => {
-        if (isRef(outputValue) && typeof toValue(outputValue) === 'string') {
-          outputValue.value = stringifyColor(converted, outFormat)
+  watch(
+    [() => value, () => stringify, () => format],
+    () => {
+      ignoreUpdates(() => {
+        const result = convertColor(value, format, {
+          fallback: fallback[format],
+          precision,
+        })
+        for (const key in result) {
+          if (result[key] === null) {
+            result[key] = fallback[format][key]
+          }
+        }
+        if (!result) {
+          if (throwOnError) {
+            throw INVALID_COLOR_VALUE
+          }
+          output.value = undefined
         }
         else {
-          Object.assign(outputValue, converted)
+          if (stringify) {
+            output.value = stringifyColor(result, { format, ...stringifyOptions })
+          }
+          else {
+            output.value = { ...fallback[format], ...result } as UnwrapRef<Color<TOutput>>
+          }
         }
       })
     },
-    { deep: true, immediate: true },
+    { immediate: true, deep: true },
   )
 
-  ignoreInputUpdates = ignoreUpdates
-
-  return outputValue
+  return output
 }

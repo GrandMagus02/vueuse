@@ -1,32 +1,32 @@
 import type { ColorFormat } from '../utils'
-import { ensureColorFormat, stringify } from '../utils'
-import { determinate } from '../utils/determinate'
+import { stringify } from '../utils'
+import type { ParseColorOptions } from '../parseColor'
+import { parseColor } from '../parseColor'
+import type { ColorStringifyOptions } from '../utils/stringifies/common'
+import { INVALID_COLOR_VALUE } from '../utils/errors'
 
-export interface StringifyColorOptions {
-  /**
-   * The delimiter for the output color.
-   */
-  delimiter?: ',' | ' '
-  /**
-   * Whether to use percentage values for alpha.
-   */
-  percentageAlpha?: boolean
+export interface StringifyColorOptions<TFormat extends ColorFormat = ColorFormat> extends ParseColorOptions<TFormat>, ColorStringifyOptions {
 }
 
 /**
- * Convert a color from one output to another.
- * @param value - The color value to convert.
- * @param format - The output of the output color.
- * @param options - The options for the conversion.
+ * Stringify a color value.
+ * @param value - The color value to stringify.
+ * @param options - The options for the stringification.
  */
-export function stringifyColor<TFormat extends ColorFormat>(
-  value: any,
-  format?: TFormat | string,
-  options: StringifyColorOptions = {},
-): string {
-  const { delimiter = ',' } = options
-  if (!format) {
-    format = determinate(value).format
+export function stringifyColor<TFormat extends ColorFormat = ColorFormat>(
+  value: unknown,
+  options: StringifyColorOptions<TFormat> = {},
+): string | undefined {
+  const parsed = parseColor<TFormat>(value, { format: options.format })
+  if (!parsed) {
+    if (options.fallback) {
+      return stringifyColor(options.fallback, options)
+    }
+    if (options.throwOnError) {
+      throw INVALID_COLOR_VALUE
+    }
+    return undefined
   }
-  return stringify[ensureColorFormat(format)](value, delimiter)
+  const { format = parsed.format } = options
+  return stringify[format]?.(parsed.color, options)
 }

@@ -12,7 +12,7 @@ Converts color between different formats.
 import { useColor } from '@vueuse/color'
 
 const rgb = useColor('rgb(255, 0, 0)') // auto detect input output
-console.log(rgb) // reactive { r: 1, g: 0, b: 0 }
+console.log(rgb.value) // { r: 1, g: 0, b: 0, a: 1 }
 ```
 
 > **NOTE**: If you know what the input and output are, it's better to explicitly set them.
