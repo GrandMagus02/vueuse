@@ -1,43 +1,49 @@
 <script setup lang="ts">
-import { stringifyColor, useColor } from '@vueuse/color'
+import { useColor } from '@vueuse/color'
+import { useColorString } from '../useColorString'
 
-const rgba = useColor('rgba(255, 0, 0, 1)', { input: 'rgba' })
-const format = 'rgba'
-
-const hsla = useColor(rgba, { input: format, output: 'hsla', stringify: true, deep: false })
-const hexa = useColor(rgba, { input: format, output: 'hexa', stringify: true })
-const hsva = useColor(rgba, { input: format, output: 'hsva', stringify: true })
-const cmyka = useColor(rgba, { input: format, output: 'cmyka', stringify: true })
+const color = useColor('rgba(255, 0, 0, 1)', 'rgb')
+const rgbString = useColorString(color.value, 'rgb', { precision: 2 })
+const hslString = useColorString(color.value, 'hsl', { precision: 2 })
+const hwbString = useColorString(color.value, 'hwb', { precision: 2 })
+const hexString = useColorString(color.value, 'hex', { precision: 2 })
+const labString = useColorString(color.value, 'lab', { precision: 2 })
+const lchString = useColorString(color.value, 'lch', { precision: 2 })
+const lrgbString = useColorString(color.value, 'lrgb', { precision: 3, format: 'lrgb' })
 </script>
 
 <template>
   <div class="flex gap-4 items-start">
-    <ColorPicker v-model="rgba" format="rgba" />
+    <ColorPicker v-model="color" />
     <div class="grid grid-cols-1 gap-2 grow">
       <div class="grid gap-1 items-center">
-        <span>HSLA:</span>
-        <code>{{ hsla }}</code>
+        <span>RGB:</span>
+        <code>{{ rgbString }}</code>
       </div>
       <div class="grid gap-1 items-center">
-        <span>RGBA:</span>
-        <code>{{ stringifyColor(rgba, 'rgba') }}</code>
+        <span>HSL:</span>
+        <code>{{ hslString }}</code>
       </div>
       <div class="grid gap-1 items-center">
-        <span>HEXA:</span>
-        <code>{{ hexa }}</code>
+        <span>HWB:</span>
+        <code>{{ hwbString }}</code>
       </div>
       <div class="grid gap-1 items-center">
-        <span>HSVA:</span>
-        <code>{{ hsva }}</code>
+        <span>HEX:</span>
+        <code>{{ hexString }}</code>
       </div>
       <div class="grid gap-1 items-center">
-        <span>CMYKA:</span>
-        <code>{{ cmyka }}</code>
+        <span>LAB:</span>
+        <code>{{ labString }}</code>
       </div>
-      <!-- <div class="grid gap-1 items-center"> -->
-      <!--  <span>OKLAB:</span> -->
-      <!--  <code>{{ oklab }}</code> -->
-      <!-- </div> -->
+      <div class="grid gap-1 items-center">
+        <span>LCH:</span>
+        <code>{{ lchString }}</code>
+      </div>
+      <div class="grid gap-1 items-center">
+        <span>LRGB:</span>
+        <code>{{ lrgbString }}</code>
+      </div>
     </div>
   </div>
 </template>

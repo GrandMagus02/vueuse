@@ -123,14 +123,19 @@ Electron renderer process modules for VueUse
 Color utilities for VueUse
 
 - [`convertColor`](https://vueuse.org/color/convertColor/) — converts color between different formats
-- [`determinateColor`](https://vueuse.org/color/determinateColor/) — normalize color values
-- [`harmonyColor`](https://vueuse.org/color/harmonyColor/) — converts color between different formats
+- [`diffColor`](https://vueuse.org/color/diffColor/) — change the lightness of a color
+- [`lightenColor`](https://vueuse.org/color/lightenColor/) — change the lightness of a color
 - [`modifyColor`](https://vueuse.org/color/modifyColor/) — modify color properties like hue
-- [`normalizeColor`](https://vueuse.org/color/normalizeColor/) — normalize color values
 - [`parseColor`](https://vueuse.org/color/parseColor/) — parses color string into object
 - [`stringifyColor`](https://vueuse.org/color/stringifyColor/) — converts color to string
 - [`useColor`](https://vueuse.org/color/useColor/) — converts color between different formats
-- [`useColorProps`](https://vueuse.org/color/useColorProps/) — converts color between different formats
-- [`useHarmony`](https://vueuse.org/color/useHarmony/) — generate color harmonies like complementary
+- [`useColorDiff`](https://vueuse.org/color/useColorDiff/) — returns a reactive object representing the HSL color
+- [`useColorString`](https://vueuse.org/color/useColorString/) — shorthand for `useColor(color
+- [`useHSL`](https://vueuse.org/color/useHSL/) — returns a reactive object representing the HSL color
+- [`useHue`](https://vueuse.org/color/useHue/) — converts color between different formats
+- [`useLightness`](https://vueuse.org/color/useLightness/) — reactive lightness value of a color
+- [`useLRGB`](https://vueuse.org/color/useLRGB/) — returns a reactive object representing the Linear RGB color
+- [`useRGB`](https://vueuse.org/color/useRGB/) — returns a reactive object representing the RGB color
+- [`useSaturation`](https://vueuse.org/color/useSaturation/) — converts color between different formats
 
 <!--ADDONS_LIST_ENDS-->

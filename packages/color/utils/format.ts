@@ -1,120 +1,164 @@
-interface Alpha {
-  a: number // 0 - 1
+import { fallback } from './fallback'
+
+export interface HEX<T = number> {
+  hex: T // 0x000000 - 0xFFFFFF
+  r: T // 0 - 1
+  g: T // 0 - 1
+  b: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeHEX extends HEX<number | null> {}
+
+export interface RGB<T = number> {
+  r: T // 0 - 1
+  g: T // 0 - 1
+  b: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeRGB extends RGB<number | null> {}
+
+export interface HSL<T = number> {
+  h: T // 0 - 1
+  s: T // 0 - 1
+  l: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeHSL extends HSL<number | null> {}
+
+export interface HSV<T = number> {
+  h: T // 0 - 1
+  s: T // 0 - 1
+  v: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeHSV extends HSV<number | null> {}
+
+export interface HWB<T = number> {
+  h: T // 0 - 1
+  w: T // 0 - 1
+  b: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeHWB extends HWB<number | null> {}
+
+export interface CMYK<T = number> {
+  c: T // 0 - 1
+  m: T // 0 - 1
+  y: T // 0 - 1
+  k: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeCMYK extends CMYK<number | null> {}
+
+export interface XYZ<T = number> {
+  x: T // coordinate system dependent
+  y: T // coordinate system dependent
+  z: T // coordinate system dependent
+  a?: T // 0 - 1
+}
+export interface RelativeXYZ extends XYZ<number | null> {}
+
+export interface LAB<T = number> {
+  l: T // 0 - 1
+  a: T // coordinate system dependent
+  b: T // coordinate system dependent
+  A?: T // 0 - 1
+}
+export interface RelativeLAB extends LAB<number | null> {}
+
+export interface LCH<T = number> {
+  l: T // 0 - 1
+  c: T // 0 - 1
+  h: T // 0 - 1
+  a?: T // 0 - 1
+}
+export interface RelativeLCH extends LCH<number | null> {}
+
+export interface OKLAB<T = number> extends LAB<T> {
+}
+export interface RelativeOKLAB extends OKLAB<number | null> {}
+
+export interface OKLCH<T = number> extends LCH<T> {
+}
+export interface RelativeOKLCH extends OKLCH<number | null> {}
+
+export interface LRGB<T = number> extends RGB<T> {
+}
+export interface RelativeLRGB extends LRGB<number | null> {}
+
+export interface LMS<T = number> {
+  l: T
+  m: T
+  s: T
+  a?: T
+}
+export interface RelativeLMS extends LMS<number | null> {}
+
+interface ColorMapping<T = number> {
+  hex: HEX<T>
+  rgb: RGB<T>
+  lrgb: LRGB<T>
+  hsl: HSL<T>
+  hsv: HSV<T>
+  hwb: HWB<T>
+  cmyk: CMYK<T>
+  xyz: XYZ<T>
+  lab: LAB<T>
+  lch: LCH<T>
+  oklab: OKLAB<T>
+  oklch: OKLCH<T>
+  lms: LMS<T>
+  keyword: HEX<T>
 }
 
-export interface HEX {
-  hex: number // 0x000000 - 0xFFFFFF
-  r: number // 0x00 - 0xFF
-  g: number // 0x00 - 0xFF
-  b: number // 0x00 - 0xFF
-}
+export const formats = ['hex', 'rgb', 'lrgb', 'hsl', 'hsv', 'hwb', 'cmyk', 'xyz', 'lab', 'lch', 'oklab', 'oklch', 'lms', 'keyword'] as const
 
-export interface HEXA extends HEX, Alpha {
-}
+export type FormatRGB = 'rgb'
+export type FormatLRGB = 'lrgb'
+export type FormatHEX = 'hex'
+export type FormatHSL = 'hsl'
+export type FormatHSV = 'hsv'
+export type FormatHWB = 'hwb'
+export type FormatCMYK = 'cmyk'
+export type FormatXYZ = 'xyz'
+export type FormatLAB = 'lab'
+export type FormatLCH = 'lch'
+export type FormatOKLAB = 'oklab'
+export type FormatOKLCH = 'oklch'
+export type FormatLMS = 'lms'
 
-export interface RGB {
-  r: number // 0 - 1
-  g: number // 0 - 1
-  b: number // 0 - 1
-}
+export type ColorFormat = typeof formats[number]
 
-export interface RGBA extends RGB, Alpha {
-}
+export type Color<T extends ColorFormat = ColorFormat> =
+  T extends any ? ColorMapping[T] : never
 
-export interface HSL {
-  h: number // 0 - 360
-  s: number // 0 - 1
-  l: number // 0 - 1
-}
+export type RelativeColor<T extends ColorFormat = ColorFormat> =
+  T extends any ? ColorMapping<number | null>[T] : never
 
-export interface HSLA extends HSL, Alpha {
-}
+export type ColorChannel<T extends ColorFormat = ColorFormat> =
+  T extends any ? keyof ColorMapping[T] : never
 
-export interface HSV {
-  h: number // 0 - 360
-  s: number // 0 - 1
-  v: number // 0 - 1
-}
+export type RelativeColorChannel<T extends ColorFormat = ColorFormat> =
+  T extends any ? keyof ColorMapping<number | null>[T] : never
 
-export interface HSVA extends HSV, Alpha {
-}
+export const Format = Object.fromEntries(
+  formats.map((format: ColorFormat) => [format.toUpperCase(), format]),
+) as Readonly<{ [K in ColorFormat as Uppercase<K>]: K }>
 
-export interface CMYK {
-  c: number // 0 - 1
-  m: number // 0 - 1
-  y: number // 0 - 1
-  k: number // 0 - 1
-}
+export const Channel = Object.fromEntries(
+  Object.keys(fallback).map((format) => {
+    const keys = Object.keys(fallback[format as ColorFormat])
+    return keys.map(key => [key.toUpperCase(), key])
+  }).flat(),
+) as Readonly<{ [K in ColorChannel as Uppercase<K>]: K }>
 
-export interface CMYKA extends CMYK, Alpha {
-}
+export const channels = Array.from(new Set(Object.values(Channel))) as ColorChannel[]
 
-export type Color<T = ColorFormat> =
-  T extends 'hexa' ? HEXA :
-    T extends 'hex' ? HEX :
-      T extends 'rgba' ? RGBA :
-        T extends 'rgb' ? RGB :
-          T extends 'hsla' ? HSLA :
-            T extends 'hsl' ? HSL :
-              T extends 'hsva' ? HSVA :
-                T extends 'hsv' ? HSV :
-                  T extends 'cmyka' ? CMYKA :
-                    T extends 'cmyk' ? CMYK :
-                      never
-
-export type ColorF = 'rgb' | 'hex' | 'hsl' | 'hsv' | 'cmyk'
-export type ColorFA = 'rgba' | 'hexa' | 'hsla' | 'hsva' | 'cmyka'
-export type ColorFormat = ColorF | ColorFA
-
-export const formats: ColorF[] = ['rgb', 'hex', 'hsl', 'hsv', 'cmyk'] as const
-export const formatsAlpha: ColorFA[] = ['rgba', 'hexa', 'hsla', 'hsva', 'cmyka'] as const
-export const formatsAll: ColorFormat[] = [...formatsAlpha, ...formats] as const
-export const formatsPairs: Record<ColorF, ColorFA> = {
-  rgb: 'rgba',
-  hex: 'hexa',
-  hsl: 'hsla',
-  hsv: 'hsva',
-  cmyk: 'cmyka',
-} as const
-
-export const Format = {
-  RGB: 'rgb',
-  RGBA: 'rgba',
-  HEX: 'hex',
-  HEXA: 'hexa',
-  HSL: 'hsl',
-  HSLA: 'hsla',
-  HSV: 'hsv',
-  HSVA: 'hsva',
-  CMYK: 'cmyk',
-  CMYKA: 'cmyka',
-  // OKLAB: 'oklab',
-} as const
-
-export function ensureColorFormat<T extends ColorFormat>(format: string): T {
-  if (formats.includes(format.toLowerCase() as ColorF)) {
-    return format as T
-  }
-  if (formatsAlpha.includes(format.toLowerCase() as ColorFA)) {
-    return format as T
-  }
-  throw new Error(`Invalid color format: ${format}`)
-}
-
-export function roundColor<T extends Color>(
-  value: T,
-  precision: number = 0,
-): T {
-  const round = (v: number) => Math.round(v * 10 ** precision) / 10 ** precision
-  const valueCopy: Record<string, any> = { ...value }
-  for (const [key, val] of Object.entries(valueCopy)) {
-    if (typeof val === 'number') {
-      valueCopy[key as any] = round(val)
+export function formatFromChannel<T extends ColorFormat = ColorFormat>(channel: ColorChannel<T>): T {
+  for (const [format, value] of Object.entries(fallback)) {
+    if (channel in value) {
+      return format as T
     }
   }
-  return valueCopy as T
-}
-
-export function isAlphaFormat(value: ColorFormat | string): value is ColorFA {
-  return formatsAlpha.includes(ensureColorFormat(value) as ColorFA)
+  throw new Error(`Invalid color channel: ${channel}`)
 }

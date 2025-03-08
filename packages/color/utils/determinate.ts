@@ -3,29 +3,32 @@ import { Format } from './format'
 import { parse } from './parse'
 
 const determinantChain: ColorFormat[] = [
-  Format.RGBA,
-  Format.RGB,
-  Format.HEXA,
   Format.HEX,
-  Format.HSLA,
+  Format.RGB,
+  Format.LRGB,
   Format.HSL,
-  Format.HSVA,
+  Format.HWB,
+  Format.LAB,
   Format.HSV,
-  Format.CMYKA,
   Format.CMYK,
+  Format.XYZ,
+  Format.LMS,
+  Format.LAB,
+  Format.LCH,
+  Format.OKLAB,
+  Format.OKLCH,
+  Format.KEYWORD,
 ] as const
 
-export function determinate<T extends ColorFormat>(value: unknown): {
-  value: Color<T>
+export function determinate<T extends ColorFormat>(value: unknown, priority?: ColorFormat): {
+  color: Color<T>
   format: T
 } {
-  for (const format of determinantChain) {
-    try {
-      return { value: parse[format](value) as Color<T>, format: format as T }
-    }
-    catch {
-      // pass
-    }
+  const chain = priority ? [priority, ...determinantChain.filter(f => f !== priority)] : determinantChain
+  for (const f of chain) {
+    const parsed = parse[f](value)
+    if (parsed)
+      return { color: parsed as Color<T>, format: f as T }
   }
-  throw new Error('Invalid color output')
+  throw new Error(`Invalid color input: ${JSON.stringify(value)}`)
 }
